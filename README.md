@@ -1,2 +1,2 @@
 # nubinprogrez-website
-mi web para utilidades y portafolio
+trabajo para diseño web (clases jeje y portafolio)
