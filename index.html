@@ -25,7 +25,6 @@
       overflow: hidden;
     }
 
-    /* ── STAR CANVAS ── */
     #stars {
       position: fixed;
       inset: 0;
@@ -33,7 +32,6 @@
       pointer-events: none;
     }
 
-    /* ── RIPPLE CANVAS ── */
     #ripples {
       position: fixed;
       inset: 0;
@@ -41,7 +39,6 @@
       pointer-events: none;
     }
 
-    /* ── INTRO SCREEN ── */
     #intro {
       position: fixed;
       inset: 0;
@@ -98,23 +95,22 @@
       position: relative;
     }
 
-    .nav-btn:hover {
+    .nav-btn:hover:not(.clicked) {
       transform: scale(1.18);
       color: #fff;
     }
 
     .nav-btn.clicked {
       animation: btnClick 0.28s cubic-bezier(.36,.07,.19,.97) forwards;
+      transition: none;
     }
 
     @keyframes btnClick {
       0%   { transform: scale(1); }
-      30%  { transform: scale(0.80); }
-      65%  { transform: scale(1.2); }
+      40%  { transform: scale(0.80); }
       100% { transform: scale(1); }
     }
 
-    /* ── NAV ICONS (images) ── */
     .nav-btn .btn-icon {
       width: 3.9rem;
       height: 3.9rem;
@@ -128,7 +124,6 @@
       transform: scale(1.08);
     }
 
-    /* top nav: restore original smaller size */
     #topnav .nav-btn {
       font-size: 0.88rem;
     }
@@ -145,7 +140,6 @@
       flex-shrink: 0;
     }
 
-    /* ── BRAND ── */
     #brand {
       position: fixed;
       bottom: 1.6rem;
@@ -172,7 +166,6 @@
       letter-spacing: 0.18em;
     }
 
-    /* ── TOP NAV (post-intro) ── */
     #topnav {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -206,7 +199,6 @@
       height: 42px;
     }
 
-    /* ── MAIN CONTENT ── */
     #content {
       position: relative;
       z-index: 5;
@@ -252,7 +244,6 @@
       font-family: var(--font);
     }
 
-    /* portfolio cards */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -277,7 +268,6 @@
     .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; font-family: var(--font); }
     .card p  { font-size: 0.9rem; color: var(--dim); font-weight: 300; font-family: var(--font); }
 
-    /* ── SOCIAL CARDS ── */
     .social-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -333,7 +323,7 @@
       text-transform: uppercase;
       font-family: var(--font);
     }
-    /* ── VILTRUMITE EASTER EGG ── */
+
     #vilt-overlay {
       position: fixed;
       inset: 0;
@@ -396,7 +386,6 @@
 <canvas id="ripples"></canvas>
 <canvas id="stars"></canvas>
 
-<!-- INTRO -->
 <div id="intro">
   <span id="select-label">select between these two</span>
   <div class="nav-buttons">
@@ -416,7 +405,6 @@
   </div>
 </div>
 
-<!-- TOP NAV -->
 <nav id="topnav">
   <button class="nav-btn" onclick="selectSection('about', this)">
     <img class="btn-icon"
@@ -433,10 +421,8 @@
   </button>
 </nav>
 
-<!-- BRAND -->
 <div id="brand">nubinprogrez</div>
 
-<!-- CONTENT -->
 <div id="content">
   <div id="about" class="section">
     <h2>About me</h2>
@@ -445,7 +431,6 @@
     <p class="section-sub">Find me on</p>
     <div class="social-cards">
 
-      <!-- Discord -->
       <a class="social-card discord" href="https://discord.com/users/1011400618042200064" target="_blank" rel="noopener">
         <div class="social-info">
           <span class="platform">Discord</span>
@@ -456,7 +441,6 @@
         </svg>
       </a>
 
-      <!-- Roblox -->
       <a class="social-card roblox" href="https://www.roblox.com/users/439319117/profile" target="_blank" rel="noopener">
         <div class="social-info">
           <span class="platform">Roblox</span>
@@ -467,7 +451,6 @@
              alt="Roblox" />
       </a>
 
-      <!-- Twitter / X -->
       <a class="social-card twitter" href="https://x.com/nubinscript" target="_blank" rel="noopener">
         <div class="social-info">
           <span class="platform">Twitter / X</span>
@@ -492,7 +475,7 @@
 </div>
 
 <script>
-  /* ── EXPANDING DARK CIRCLES (ripples) ── */
+
   const rCanvas = document.getElementById('ripples');
   const rCtx = rCanvas.getContext('2d');
   let ripples = [];
@@ -513,7 +496,6 @@
     });
   }
 
-  // seed some ripples spread over time so they don't all start at once
   for (let i = 0; i < 7; i++) {
     setTimeout(spawnRipple, i * 900);
   }
@@ -525,17 +507,15 @@
 
     ripples.forEach(rp => {
       rp.r += rp.speed;
-      const progress = rp.r / rp.maxR;          // 0 → 1
-      const alpha = rp.alpha * (1 - progress);   // fade as it expands
+      const progress = rp.r / rp.maxR;         
+      const alpha = rp.alpha * (1 - progress); //bola rara  crece en radio alfa
 
-      // dark ring: subtle border only
       rCtx.beginPath();
       rCtx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
       rCtx.strokeStyle = `rgba(0, 5, 30, ${alpha * 1.6})`;
       rCtx.lineWidth = 28 * (1 - progress * 0.5);
       rCtx.stroke();
 
-      // inner dark fill that shrinks in opacity
       const grad = rCtx.createRadialGradient(rp.x, rp.y, 0, rp.x, rp.y, rp.r);
       grad.addColorStop(0,   `rgba(0, 4, 20, ${alpha * 0.55})`);
       grad.addColorStop(0.6, `rgba(0, 4, 20, ${alpha * 0.2})`);
@@ -552,7 +532,6 @@
   resizeRipples();
   requestAnimationFrame(drawRipples);
 
-  /* ── STARS ── */
   const canvas = document.getElementById('stars');
   const ctx = canvas.getContext('2d');
   let stars = [];
@@ -595,7 +574,6 @@
 
   resize(); initStars(); requestAnimationFrame(drawStars);
 
-  /* ── CLICK SFX ── */
   const clickSfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/clicksfx.mp3');
   clickSfx.preload = 'auto';
 
@@ -608,7 +586,6 @@
     btn.addEventListener('animationend', () => btn.classList.remove('clicked'), { once: true });
   }
 
-  /* ── TRANSITION ── */
   let transitioned = false;
 
   function selectSection(id, btn) {
@@ -635,7 +612,6 @@
       }, 350);
     }
   }
-  /* ── VILTRUMITE EASTER EGG ── */
   const COMBO = ['6', '7'];
   let comboIdx = 0;
   let eggDone = false;
@@ -698,32 +674,26 @@
     const overlay = document.getElementById('vilt-overlay');
     const emperorImg = document.getElementById('vilt-emperor-img');
 
-    // 1. Black overlay fades in
     overlay.classList.add('show');
 
-    // play audio
     viltSfx.currentTime = 0;
     viltSfx.play().catch(() => {});
 
     let activeEls = [];
 
-    // t=0 — "IM NOT" white, random position & rotation
     const t1 = makeText("IM NOT", '#ffffff');
     showEl(t1);
     activeEls.push(t1);
 
-    // t=0.45s — "A VILTRUMITE!" red, random position & rotation
     setTimeout(() => {
       const t2 = makeText("A VILTRUMITE!", '#ff1a1a');
       showEl(t2);
       activeEls.push(t2);
     }, 450);
 
-    // watch currentTime for t=2.0
     viltSfx.addEventListener('timeupdate', function onTime() {
       const ct = viltSfx.currentTime;
 
-      // t=2.0 — clear texts, show center message
       if (ct >= 2.0 && !viltSfx._phase2) {
         viltSfx._phase2 = true;
         activeEls.forEach(el => hideEl(el));
@@ -735,14 +705,12 @@
         activeEls.push(t3);
       }
 
-      // t=3.2 — clear center text
       if (ct >= 3.2 && !viltSfx._phase3) {
         viltSfx._phase3 = true;
         activeEls.forEach(el => hideEl(el));
         activeEls = [];
       }
 
-      // t=4.1 — "YOU ARE" random pos, then "THE EMPEROR" center red
       if (ct >= 4.1 && !viltSfx._phase4) {
         viltSfx._phase4 = true;
         activeEls.forEach(el => hideEl(el));
@@ -759,29 +727,24 @@
         }, 300);
       }
 
-      // t=5.1 — destroy last texts, rise emperor image
       if (ct >= 5.1 && !viltSfx._phase5) {
         viltSfx._phase5 = true;
         activeEls.forEach(el => hideEl(el));
         activeEls = [];
 
-        // strip any leftover classes and transitions first
         emperorImg.style.transition = 'none';
         emperorImg.style.opacity    = '1';
         emperorImg.style.bottom     = '-120vh';
         emperorImg.style.transform  = 'translateX(-50%) rotate(-22deg)';
 
-        // force browser to paint the off-screen state before animating
         void emperorImg.offsetHeight;
 
-        // now apply the transition and move into view
         emperorImg.style.transition = 'bottom 1.4s cubic-bezier(.22,1,.36,1), transform 1.4s cubic-bezier(.22,1,.36,1)';
         emperorImg.style.bottom     = '8vh';
         emperorImg.style.transform  = 'translateX(-50%) rotate(0deg)';
       }
     });
 
-    // when audio ends — fade emperor image AND overlay together over 3s
     viltSfx.addEventListener('ended', () => {
       emperorImg.style.transition = 'opacity 3s ease';
       emperorImg.style.opacity    = '0';
@@ -796,7 +759,6 @@
     }, { once: true });
   }
 </script>
-<!-- VILTRUMITE EASTER EGG -->
 <div id="vilt-overlay"></div>
 <img id="vilt-emperor-img"
      src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/tungtungemperor.png"
