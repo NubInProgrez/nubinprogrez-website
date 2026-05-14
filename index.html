@@ -1,1 +1,379 @@
-<h1>nub in progress Bv</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>nubinprogrez</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07091a;
+      --bg2: #0b0e24;
+      --white: #f0f0f0;
+      --dim: rgba(240,240,240,0.55);
+      --accent: #7b8cff;
+      --font: 'Fredoka', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+
+    /* ── STAR CANVAS ── */
+    #stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── INTRO SCREEN ── */
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    #intro.hide {
+      opacity: 0;
+      transform: translateY(-30px);
+      pointer-events: none;
+    }
+
+    #select-label {
+      font-size: 1.15rem;
+      font-weight: 300;
+      color: var(--dim);
+      margin-bottom: 2rem;
+      letter-spacing: 0.04em;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    #intro.hiding #select-label {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 1.2rem 2.8rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--white);
+      font-family: var(--font);
+      font-size: 1.25rem;
+      font-weight: 600;
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), color 0.2s;
+      position: relative;
+    }
+
+    .nav-btn:hover {
+      transform: scale(1.18);
+      color: #fff;
+    }
+
+    .nav-btn svg {
+      width: 2.4rem;
+      height: 2.4rem;
+      fill: var(--white);
+      transition: fill 0.2s;
+    }
+
+    .nav-btn:hover svg { fill: var(--accent); }
+
+    .divider {
+      width: 1px;
+      height: 70px;
+      background: rgba(255,255,255,0.25);
+      flex-shrink: 0;
+    }
+
+    /* ── BRAND ── */
+    #brand {
+      position: fixed;
+      bottom: 1.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.05rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      z-index: 20;
+      transition: font-size 0.6s cubic-bezier(.22,1,.36,1),
+                  bottom 0.6s cubic-bezier(.22,1,.36,1),
+                  left 0.6s cubic-bezier(.22,1,.36,1),
+                  transform 0.6s cubic-bezier(.22,1,.36,1),
+                  color 0.4s;
+    }
+
+    #brand.small {
+      font-size: 0.72rem;
+      bottom: 0.55rem;
+      left: 50%;
+      transform: translateX(-50%);
+      letter-spacing: 0.18em;
+    }
+
+    /* ── TOP NAV (post-intro) ── */
+    #topnav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 15;
+      display: flex;
+      justify-content: center;
+      background: rgba(7,9,26,0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 0.3rem 0 0.1rem;
+      opacity: 0;
+      transform: translateY(-100%);
+      transition: opacity 0.55s ease 0.2s, transform 0.55s cubic-bezier(.22,1,.36,1) 0.2s;
+      pointer-events: none;
+    }
+
+    #topnav.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    #topnav .nav-btn {
+      font-size: 0.88rem;
+      padding: 0.4rem 1.6rem 0.5rem;
+      gap: 0.3rem;
+    }
+
+    #topnav .nav-btn svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    #topnav .divider {
+      height: 42px;
+    }
+
+    /* ── MAIN CONTENT ── */
+    #content {
+      position: relative;
+      z-index: 5;
+      padding-top: 80px;
+      min-height: 100vh;
+      overflow-y: auto;
+      opacity: 0;
+      transition: opacity 0.6s ease 0.5s;
+    }
+
+    #content.visible { opacity: 1; }
+
+    .section {
+      display: none;
+      padding: 4rem 2rem;
+      max-width: 860px;
+      margin: 0 auto;
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .section.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .section h2 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #fff;
+    }
+
+    .section p {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.7;
+    }
+
+    /* portfolio cards placeholder */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.2rem;
+      margin-top: 2rem;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 1.4rem;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      background: rgba(123,140,255,0.08);
+    }
+
+    .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .card p  { font-size: 0.9rem; color: var(--dim); font-weight: 300; }
+  </style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<!-- INTRO -->
+<div id="intro">
+  <span id="select-label">select between these two</span>
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="selectSection('about')">
+      <!-- person icon -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+      About me
+    </button>
+    <div class="divider"></div>
+    <button class="nav-btn" onclick="selectSection('portfolio')">
+      <!-- book icon -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-6 2l1.5 3-1.5 1-1.5-1L12 4zm6 16H6V4h2v8l4-2.4L16 12V4h2v16z"/>
+      </svg>
+      Portfolio
+    </button>
+  </div>
+</div>
+
+<!-- TOP NAV -->
+<nav id="topnav">
+  <button class="nav-btn" onclick="selectSection('about')">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+    About me
+  </button>
+  <div class="divider"></div>
+  <button class="nav-btn" onclick="selectSection('portfolio')">
+    <svg viewBox="0 0 24 24"><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-6 2l1.5 3-1.5 1-1.5-1L12 4zm6 16H6V4h2v8l4-2.4L16 12V4h2v16z"/></svg>
+    Portfolio
+  </button>
+</nav>
+
+<!-- BRAND -->
+<div id="brand">nubinprogrez</div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div id="about" class="section">
+    <h2>About me</h2>
+    <p>Hey! I'm a web developer passionate about building clean and functional digital experiences. I love turning ideas into reality through code.</p>
+  </div>
+  <div id="portfolio" class="section">
+    <h2>Portfolio</h2>
+    <p>Here are some of my projects.</p>
+    <div class="cards">
+      <div class="card"><h3>Project 1</h3><p>Short description of what this project does.</p></div>
+      <div class="card"><h3>Project 2</h3><p>Short description of what this project does.</p></div>
+      <div class="card"><h3>Project 3</h3><p>Short description of what this project does.</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── STARS ── */
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < 180; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.4 + 0.3,
+        a: Math.random(),
+        speed: Math.random() * 0.004 + 0.001,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function drawStars(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      const alpha = 0.3 + 0.7 * Math.abs(Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180,190,255,${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener('resize', () => { resize(); initStars(); });
+  resize(); initStars(); requestAnimationFrame(drawStars);
+
+  /* ── TRANSITION ── */
+  let transitioned = false;
+
+  function selectSection(id) {
+    // show section
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(id);
+    if (target) target.classList.add('active');
+
+    if (!transitioned) {
+      transitioned = true;
+      const intro = document.getElementById('intro');
+      const topnav = document.getElementById('topnav');
+      const content = document.getElementById('content');
+      const brand = document.getElementById('brand');
+
+      // 1. fade out label first
+      intro.classList.add('hiding');
+
+      setTimeout(() => {
+        // 2. hide full intro
+        intro.classList.add('hide');
+        // 3. show top nav
+        topnav.classList.add('visible');
+        // 4. shrink brand
+        brand.classList.add('small');
+        // 5. show content
+        content.classList.add('visible');
+        // allow scrolling
+        document.body.style.overflow = 'auto';
+      }, 350);
+    }
+  }
+</script>
+</body>
+</html>
