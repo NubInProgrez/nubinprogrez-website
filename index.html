@@ -333,28 +333,60 @@
       text-transform: uppercase;
       font-family: var(--font);
     }
-    /* ── 67 EASTER EGG ── */
-    #egg67 {
+    /* ── VILTRUMITE EASTER EGG ── */
+    #vilt-overlay {
       position: fixed;
-      bottom: -120vh;
+      inset: 0;
+      z-index: 9990;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #vilt-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #vilt-overlay.fadeout {
+      transition: opacity 3s ease;
+      opacity: 0;
+    }
+
+    .vilt-text {
+      position: fixed;
+      z-index: 9995;
+      font-family: 'Fredoka', sans-serif !important;
+      font-weight: 700;
+      font-size: clamp(3.5rem, 12vw, 9rem);
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      text-align: center;
+      max-width: 90vw;
+    }
+    .vilt-text.show { opacity: 1; }
+    .vilt-text.hide { opacity: 0; }
+
+    #vilt-emperor-img {
+      position: fixed;
+      z-index: 9996;
+      width: min(480px, 80vw);
       left: 50%;
-      transform: translateX(-50%) rotate(-18deg);
-      width: min(420px, 85vw);
-      z-index: 9999;
+      bottom: -120vh;
+      transform: translateX(-50%) rotate(-22deg);
       pointer-events: none;
       opacity: 1;
       transition: none;
     }
-
-    #egg67.rise {
-      transition: bottom 1.1s cubic-bezier(.22,1,.36,1),
-                  transform 1.1s cubic-bezier(.22,1,.36,1);
-      bottom: 6vh;
+    #vilt-emperor-img.rise {
+      transition: bottom 1.4s cubic-bezier(.22,1,.36,1),
+                  transform 1.4s cubic-bezier(.22,1,.36,1);
+      bottom: 8vh;
       transform: translateX(-50%) rotate(0deg);
     }
-
-    #egg67.fade {
-      transition: opacity 2.2s ease;
+    #vilt-emperor-img.fadeout {
+      transition: opacity 3s ease;
       opacity: 0;
     }
   </style>
@@ -603,62 +635,168 @@
       }, 350);
     }
   }
-  /* ── 67 EASTER EGG ── */
+  /* ── VILTRUMITE EASTER EGG ── */
   const COMBO = ['6', '7'];
   let comboIdx = 0;
   let eggDone = false;
 
-  const egg67sfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/tungtungsahur.mp3');
-  egg67sfx.preload = 'auto';
+  const viltSfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/tungtungsahur.mp3');
+  viltSfx.preload = 'auto';
 
   document.addEventListener('keydown', (e) => {
     if (eggDone) return;
-
     if (e.key === COMBO[comboIdx]) {
       comboIdx++;
       if (comboIdx === COMBO.length) {
         comboIdx = 0;
-        triggerEgg67();
+        triggerViltrumite();
       }
     } else {
       comboIdx = e.key === COMBO[0] ? 1 : 0;
     }
   });
 
-  function triggerEgg67() {
-    eggDone = true;
-    const img = document.getElementById('egg67');
+  function randRot() { return (Math.random() * 34 - 17).toFixed(1); }
+  function randPos() {
+    return {
+      left: (15 + Math.random() * 55) + 'vw',
+      top:  (10 + Math.random() * 55) + 'vh'
+    };
+  }
 
-    // reset to off-screen state (no transition yet)
-    img.classList.remove('rise', 'fade');
-    img.style.opacity = '1';
-    img.style.bottom = '-120vh';
-    img.style.transform = 'translateX(-50%) rotate(-18deg)';
+  function makeText(content, color) {
+    const el = document.createElement('div');
+    el.className = 'vilt-text';
+    el.textContent = content;
+    el.style.color = color;
+    const pos = randPos();
+    el.style.left = pos.left;
+    el.style.top  = pos.top;
+    el.style.transform = `translate(-50%, -50%) rotate(${randRot()}deg)`;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function showEl(el)  { requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add('show'); el.classList.remove('hide'); }); }); }
+  function hideEl(el)  { el.classList.add('hide'); el.classList.remove('show'); setTimeout(() => el.remove(), 250); }
+
+  function centerText(content, color) {
+    const el = document.createElement('div');
+    el.className = 'vilt-text';
+    el.textContent = content;
+    el.style.color = color;
+    el.style.left = '50vw';
+    el.style.top  = '50vh';
+    el.style.transform = 'translate(-50%, -50%)';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function triggerViltrumite() {
+    eggDone = true;
+
+    const overlay = document.getElementById('vilt-overlay');
+    const emperorImg = document.getElementById('vilt-emperor-img');
+
+    // 1. Black overlay fades in
+    overlay.classList.add('show');
 
     // play audio
-    egg67sfx.currentTime = 0;
-    egg67sfx.play().catch(() => {});
+    viltSfx.currentTime = 0;
+    viltSfx.play().catch(() => {});
 
-    // small delay then rise
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        img.classList.add('rise');
-      });
+    let activeEls = [];
+
+    // t=0 — "IM NOT" white, random position & rotation
+    const t1 = makeText("IM NOT", '#ffffff');
+    showEl(t1);
+    activeEls.push(t1);
+
+    // t=0.45s — "A VILTRUMITE!" red, random position & rotation
+    setTimeout(() => {
+      const t2 = makeText("A VILTRUMITE!", '#ff1a1a');
+      showEl(t2);
+      activeEls.push(t2);
+    }, 450);
+
+    // watch currentTime for t=2.0
+    viltSfx.addEventListener('timeupdate', function onTime() {
+      const ct = viltSfx.currentTime;
+
+      // t=2.0 — clear texts, show center message
+      if (ct >= 2.0 && !viltSfx._phase2) {
+        viltSfx._phase2 = true;
+        activeEls.forEach(el => hideEl(el));
+        activeEls = [];
+
+        const t3 = centerText("YOU SHOULDN'T HAVE LEFT ME IN CHARGE", '#ffffff');
+        t3.style.fontSize = 'clamp(1.8rem, 5vw, 4rem)';
+        showEl(t3);
+        activeEls.push(t3);
+      }
+
+      // t=3.2 — clear center text
+      if (ct >= 3.2 && !viltSfx._phase3) {
+        viltSfx._phase3 = true;
+        activeEls.forEach(el => hideEl(el));
+        activeEls = [];
+      }
+
+      // t=4.1 — "YOU ARE" random pos, then "THE EMPEROR" center red
+      if (ct >= 4.1 && !viltSfx._phase4) {
+        viltSfx._phase4 = true;
+        activeEls.forEach(el => hideEl(el));
+        activeEls = [];
+
+        const t4 = makeText("YOU ARE", '#ffffff');
+        showEl(t4);
+        activeEls.push(t4);
+
+        setTimeout(() => {
+          const t5 = centerText("THE EMPEROR", '#ff1a1a');
+          showEl(t5);
+          activeEls.push(t5);
+        }, 300);
+      }
+
+      // t=5.1 — destroy last texts, rise emperor image
+      if (ct >= 5.1 && !viltSfx._phase5) {
+        viltSfx._phase5 = true;
+        activeEls.forEach(el => hideEl(el));
+        activeEls = [];
+
+        // reset image to off-screen
+        emperorImg.classList.remove('rise', 'fadeout');
+        emperorImg.style.opacity = '1';
+        emperorImg.style.bottom = '-120vh';
+        emperorImg.style.transform = 'translateX(-50%) rotate(-22deg)';
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            emperorImg.classList.add('rise');
+          });
+        });
+      }
     });
 
-    // when audio ends, start fade-out and then remove
-    egg67sfx.addEventListener('ended', () => {
-      img.classList.remove('rise');
-      img.classList.add('fade');
-      img.addEventListener('transitionend', () => {
-        img.remove();
-      }, { once: true });
+    // when audio ends — fade emperor image AND overlay together over 3s
+    viltSfx.addEventListener('ended', () => {
+      emperorImg.classList.remove('rise');
+      emperorImg.classList.add('fadeout');
+      overlay.classList.remove('show');
+      overlay.classList.add('fadeout');
+
+      setTimeout(() => {
+        emperorImg.style.opacity = '0';
+        overlay.remove();
+      }, 3100);
     }, { once: true });
   }
 </script>
-<!-- 67 EASTER EGG -->
-<img id="egg67"
-     src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/67.jpg"
+<!-- VILTRUMITE EASTER EGG -->
+<div id="vilt-overlay"></div>
+<img id="vilt-emperor-img"
+     src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/tungtungemperor.png"
      alt="" />
 
 </body>
