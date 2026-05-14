@@ -765,29 +765,32 @@
         activeEls.forEach(el => hideEl(el));
         activeEls = [];
 
-        // reset image to off-screen
-        emperorImg.classList.remove('rise', 'fadeout');
-        emperorImg.style.opacity = '1';
-        emperorImg.style.bottom = '-120vh';
-        emperorImg.style.transform = 'translateX(-50%) rotate(-22deg)';
+        // strip any leftover classes and transitions first
+        emperorImg.style.transition = 'none';
+        emperorImg.style.opacity    = '1';
+        emperorImg.style.bottom     = '-120vh';
+        emperorImg.style.transform  = 'translateX(-50%) rotate(-22deg)';
 
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            emperorImg.classList.add('rise');
-          });
-        });
+        // force browser to paint the off-screen state before animating
+        void emperorImg.offsetHeight;
+
+        // now apply the transition and move into view
+        emperorImg.style.transition = 'bottom 1.4s cubic-bezier(.22,1,.36,1), transform 1.4s cubic-bezier(.22,1,.36,1)';
+        emperorImg.style.bottom     = '8vh';
+        emperorImg.style.transform  = 'translateX(-50%) rotate(0deg)';
       }
     });
 
     // when audio ends — fade emperor image AND overlay together over 3s
     viltSfx.addEventListener('ended', () => {
-      emperorImg.classList.remove('rise');
-      emperorImg.classList.add('fadeout');
-      overlay.classList.remove('show');
-      overlay.classList.add('fadeout');
+      emperorImg.style.transition = 'opacity 3s ease';
+      emperorImg.style.opacity    = '0';
+      overlay.style.transition    = 'opacity 3s ease';
+      overlay.style.opacity       = '0';
 
       setTimeout(() => {
-        emperorImg.style.opacity = '0';
+        emperorImg.style.bottom    = '-120vh';
+        emperorImg.style.transition = 'none';
         overlay.remove();
       }, 3100);
     }, { once: true });
