@@ -6,7 +6,7 @@
   <title>nubinprogrez</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Fredoka', sans-serif !important; }
 
     :root {
       --bg: #07091a;
@@ -92,7 +92,7 @@
       border: none;
       color: var(--white);
       font-family: var(--font);
-      font-size: 1.25rem;
+      font-size: 1.875rem;
       font-weight: 600;
       transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), color 0.2s;
       position: relative;
@@ -103,10 +103,21 @@
       color: #fff;
     }
 
+    .nav-btn.clicked {
+      animation: btnClick 0.28s cubic-bezier(.36,.07,.19,.97) forwards;
+    }
+
+    @keyframes btnClick {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(0.80); }
+      65%  { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
     /* ── NAV ICONS (images) ── */
     .nav-btn .btn-icon {
-      width: 2.6rem;
-      height: 2.6rem;
+      width: 3.9rem;
+      height: 3.9rem;
       object-fit: contain;
       transition: transform 0.2s, filter 0.2s;
       filter: brightness(0.85);
@@ -117,7 +128,11 @@
       transform: scale(1.08);
     }
 
-    /* top nav smaller icons */
+    /* top nav: restore original smaller size */
+    #topnav .nav-btn {
+      font-size: 0.88rem;
+    }
+
     #topnav .nav-btn .btn-icon {
       width: 1.6rem;
       height: 1.6rem;
@@ -183,7 +198,6 @@
     }
 
     #topnav .nav-btn {
-      font-size: 0.88rem;
       padding: 0.4rem 1.6rem 0.5rem;
       gap: 0.3rem;
     }
@@ -330,14 +344,14 @@
 <div id="intro">
   <span id="select-label">select between these two</span>
   <div class="nav-buttons">
-    <button class="nav-btn" onclick="selectSection('about')">
+    <button class="nav-btn" onclick="selectSection('about', this)">
       <img class="btn-icon"
            src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/abm_icon.png"
            alt="About me icon" />
       About me
     </button>
     <div class="divider"></div>
-    <button class="nav-btn" onclick="selectSection('portfolio')">
+    <button class="nav-btn" onclick="selectSection('portfolio', this)">
       <img class="btn-icon"
            src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/port_icon.png"
            alt="Portfolio icon" />
@@ -348,14 +362,14 @@
 
 <!-- TOP NAV -->
 <nav id="topnav">
-  <button class="nav-btn" onclick="selectSection('about')">
+  <button class="nav-btn" onclick="selectSection('about', this)">
     <img class="btn-icon"
          src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/abm_icon.png"
          alt="About me icon" />
     About me
   </button>
   <div class="divider"></div>
-  <button class="nav-btn" onclick="selectSection('portfolio')">
+  <button class="nav-btn" onclick="selectSection('portfolio', this)">
     <img class="btn-icon"
          src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/port_icon.png"
          alt="Portfolio icon" />
@@ -525,10 +539,24 @@
 
   resize(); initStars(); requestAnimationFrame(drawStars);
 
+  /* ── CLICK SFX ── */
+  const clickSfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/clicksfx.mp3');
+  clickSfx.preload = 'auto';
+
+  function playClick(btn) {
+    clickSfx.currentTime = 0;
+    clickSfx.play().catch(() => {});
+    btn.classList.remove('clicked');
+    void btn.offsetWidth;
+    btn.classList.add('clicked');
+    btn.addEventListener('animationend', () => btn.classList.remove('clicked'), { once: true });
+  }
+
   /* ── TRANSITION ── */
   let transitioned = false;
 
-  function selectSection(id) {
+  function selectSection(id, btn) {
+    if (btn) playClick(btn);
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(id);
     if (target) target.classList.add('active');
