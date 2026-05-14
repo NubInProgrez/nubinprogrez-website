@@ -33,6 +33,14 @@
       pointer-events: none;
     }
 
+    /* ── RIPPLE CANVAS ── */
+    #ripples {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     /* ── INTRO SCREEN ── */
     #intro {
       position: fixed;
@@ -58,6 +66,7 @@
       color: var(--dim);
       margin-bottom: 2rem;
       letter-spacing: 0.04em;
+      font-family: var(--font);
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
 
@@ -94,14 +103,25 @@
       color: #fff;
     }
 
-    .nav-btn svg {
-      width: 2.4rem;
-      height: 2.4rem;
-      fill: var(--white);
-      transition: fill 0.2s;
+    /* ── NAV ICONS (images) ── */
+    .nav-btn .btn-icon {
+      width: 2.6rem;
+      height: 2.6rem;
+      object-fit: contain;
+      transition: transform 0.2s, filter 0.2s;
+      filter: brightness(0.85);
     }
 
-    .nav-btn:hover svg { fill: var(--accent); }
+    .nav-btn:hover .btn-icon {
+      filter: brightness(1.15) drop-shadow(0 0 6px rgba(123,140,255,0.6));
+      transform: scale(1.08);
+    }
+
+    /* top nav smaller icons */
+    #topnav .nav-btn .btn-icon {
+      width: 1.6rem;
+      height: 1.6rem;
+    }
 
     .divider {
       width: 1px;
@@ -118,6 +138,7 @@
       transform: translateX(-50%);
       font-size: 1.05rem;
       font-weight: 400;
+      font-family: var(--font);
       letter-spacing: 0.12em;
       color: var(--dim);
       z-index: 20;
@@ -152,6 +173,7 @@
       transform: translateY(-100%);
       transition: opacity 0.55s ease 0.2s, transform 0.55s cubic-bezier(.22,1,.36,1) 0.2s;
       pointer-events: none;
+      font-family: var(--font);
     }
 
     #topnav.visible {
@@ -164,11 +186,6 @@
       font-size: 0.88rem;
       padding: 0.4rem 1.6rem 0.5rem;
       gap: 0.3rem;
-    }
-
-    #topnav .nav-btn svg {
-      width: 1.5rem;
-      height: 1.5rem;
     }
 
     #topnav .divider {
@@ -184,6 +201,7 @@
       overflow-y: auto;
       opacity: 0;
       transition: opacity 0.6s ease 0.5s;
+      font-family: var(--font);
     }
 
     #content.visible { opacity: 1; }
@@ -194,6 +212,7 @@
       max-width: 860px;
       margin: 0 auto;
       animation: fadeUp 0.5s ease forwards;
+      font-family: var(--font);
     }
 
     .section.active { display: block; }
@@ -208,6 +227,7 @@
       font-weight: 700;
       margin-bottom: 1.5rem;
       color: #fff;
+      font-family: var(--font);
     }
 
     .section p {
@@ -215,9 +235,10 @@
       font-weight: 300;
       color: var(--dim);
       line-height: 1.7;
+      font-family: var(--font);
     }
 
-    /* portfolio cards placeholder */
+    /* portfolio cards */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -231,6 +252,7 @@
       border-radius: 12px;
       padding: 1.4rem;
       transition: transform 0.2s, background 0.2s;
+      font-family: var(--font);
     }
 
     .card:hover {
@@ -238,8 +260,8 @@
       background: rgba(123,140,255,0.08);
     }
 
-    .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .card p  { font-size: 0.9rem; color: var(--dim); font-weight: 300; }
+    .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; font-family: var(--font); }
+    .card p  { font-size: 0.9rem; color: var(--dim); font-weight: 300; font-family: var(--font); }
 
     /* ── SOCIAL CARDS ── */
     .social-cards {
@@ -259,6 +281,7 @@
       padding: 1.2rem 1.4rem;
       text-decoration: none;
       color: var(--white);
+      font-family: var(--font);
       transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), background 0.2s, border-color 0.2s;
       cursor: pointer;
     }
@@ -273,8 +296,8 @@
     .social-card:hover.twitter  { background: rgba(29,161,242,0.12);  border-color: rgba(29,161,242,0.35); }
 
     .social-info { display: flex; flex-direction: column; gap: 0.25rem; }
-    .social-info .platform { font-size: 0.78rem; font-weight: 300; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; }
-    .social-info .username  { font-size: 1.05rem; font-weight: 600; }
+    .social-info .platform { font-size: 0.78rem; font-weight: 300; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; font-family: var(--font); }
+    .social-info .username  { font-size: 1.05rem; font-weight: 600; font-family: var(--font); }
 
     .social-logo {
       width: 2.4rem;
@@ -294,11 +317,13 @@
       margin-bottom: 0.2rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      font-family: var(--font);
     }
   </style>
 </head>
 <body>
 
+<canvas id="ripples"></canvas>
 <canvas id="stars"></canvas>
 
 <!-- INTRO -->
@@ -306,18 +331,16 @@
   <span id="select-label">select between these two</span>
   <div class="nav-buttons">
     <button class="nav-btn" onclick="selectSection('about')">
-      <!-- person icon -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-      </svg>
+      <img class="btn-icon"
+           src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/abm_icon.png"
+           alt="About me icon" />
       About me
     </button>
     <div class="divider"></div>
     <button class="nav-btn" onclick="selectSection('portfolio')">
-      <!-- book icon -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-6 2l1.5 3-1.5 1-1.5-1L12 4zm6 16H6V4h2v8l4-2.4L16 12V4h2v16z"/>
-      </svg>
+      <img class="btn-icon"
+           src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/port_icon.png"
+           alt="Portfolio icon" />
       Portfolio
     </button>
   </div>
@@ -326,12 +349,16 @@
 <!-- TOP NAV -->
 <nav id="topnav">
   <button class="nav-btn" onclick="selectSection('about')">
-    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+    <img class="btn-icon"
+         src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/abm_icon.png"
+         alt="About me icon" />
     About me
   </button>
   <div class="divider"></div>
   <button class="nav-btn" onclick="selectSection('portfolio')">
-    <svg viewBox="0 0 24 24"><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-6 2l1.5 3-1.5 1-1.5-1L12 4zm6 16H6V4h2v8l4-2.4L16 12V4h2v16z"/></svg>
+    <img class="btn-icon"
+         src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/port_icon.png"
+         alt="Portfolio icon" />
     Portfolio
   </button>
 </nav>
@@ -395,6 +422,66 @@
 </div>
 
 <script>
+  /* ── EXPANDING DARK CIRCLES (ripples) ── */
+  const rCanvas = document.getElementById('ripples');
+  const rCtx = rCanvas.getContext('2d');
+  let ripples = [];
+
+  function resizeRipples() {
+    rCanvas.width  = window.innerWidth;
+    rCanvas.height = window.innerHeight;
+  }
+
+  function spawnRipple() {
+    ripples.push({
+      x: Math.random() * rCanvas.width,
+      y: Math.random() * rCanvas.height,
+      r: 0,
+      maxR: 180 + Math.random() * 220,
+      speed: 0.35 + Math.random() * 0.45,
+      alpha: 0.18 + Math.random() * 0.14
+    });
+  }
+
+  // seed some ripples spread over time so they don't all start at once
+  for (let i = 0; i < 7; i++) {
+    setTimeout(spawnRipple, i * 900);
+  }
+  setInterval(spawnRipple, 1400);
+
+  function drawRipples() {
+    rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
+    ripples = ripples.filter(rp => rp.r < rp.maxR);
+
+    ripples.forEach(rp => {
+      rp.r += rp.speed;
+      const progress = rp.r / rp.maxR;          // 0 → 1
+      const alpha = rp.alpha * (1 - progress);   // fade as it expands
+
+      // dark ring: subtle border only
+      rCtx.beginPath();
+      rCtx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+      rCtx.strokeStyle = `rgba(0, 5, 30, ${alpha * 1.6})`;
+      rCtx.lineWidth = 28 * (1 - progress * 0.5);
+      rCtx.stroke();
+
+      // inner dark fill that shrinks in opacity
+      const grad = rCtx.createRadialGradient(rp.x, rp.y, 0, rp.x, rp.y, rp.r);
+      grad.addColorStop(0,   `rgba(0, 4, 20, ${alpha * 0.55})`);
+      grad.addColorStop(0.6, `rgba(0, 4, 20, ${alpha * 0.2})`);
+      grad.addColorStop(1,   `rgba(0, 4, 20, 0)`);
+      rCtx.beginPath();
+      rCtx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+      rCtx.fillStyle = grad;
+      rCtx.fill();
+    });
+
+    requestAnimationFrame(drawRipples);
+  }
+
+  resizeRipples();
+  requestAnimationFrame(drawRipples);
+
   /* ── STARS ── */
   const canvas = document.getElementById('stars');
   const ctx = canvas.getContext('2d');
@@ -431,38 +518,35 @@
     requestAnimationFrame(drawStars);
   }
 
-  window.addEventListener('resize', () => { resize(); initStars(); });
+  window.addEventListener('resize', () => {
+    resize(); initStars();
+    resizeRipples();
+  });
+
   resize(); initStars(); requestAnimationFrame(drawStars);
 
   /* ── TRANSITION ── */
   let transitioned = false;
 
   function selectSection(id) {
-    // show section
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(id);
     if (target) target.classList.add('active');
 
     if (!transitioned) {
       transitioned = true;
-      const intro = document.getElementById('intro');
-      const topnav = document.getElementById('topnav');
+      const intro   = document.getElementById('intro');
+      const topnav  = document.getElementById('topnav');
       const content = document.getElementById('content');
-      const brand = document.getElementById('brand');
+      const brand   = document.getElementById('brand');
 
-      // 1. fade out label first
       intro.classList.add('hiding');
 
       setTimeout(() => {
-        // 2. hide full intro
         intro.classList.add('hide');
-        // 3. show top nav
         topnav.classList.add('visible');
-        // 4. shrink brand
         brand.classList.add('small');
-        // 5. show content
         content.classList.add('visible');
-        // allow scrolling
         document.body.style.overflow = 'auto';
       }, 350);
     }
