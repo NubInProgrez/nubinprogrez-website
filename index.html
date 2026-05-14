@@ -333,6 +333,30 @@
       text-transform: uppercase;
       font-family: var(--font);
     }
+    /* ── 67 EASTER EGG ── */
+    #egg67 {
+      position: fixed;
+      bottom: -120vh;
+      left: 50%;
+      transform: translateX(-50%) rotate(-18deg);
+      width: min(420px, 85vw);
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 1;
+      transition: none;
+    }
+
+    #egg67.rise {
+      transition: bottom 1.1s cubic-bezier(.22,1,.36,1),
+                  transform 1.1s cubic-bezier(.22,1,.36,1);
+      bottom: 6vh;
+      transform: translateX(-50%) rotate(0deg);
+    }
+
+    #egg67.fade {
+      transition: opacity 2.2s ease;
+      opacity: 0;
+    }
   </style>
 </head>
 <body>
@@ -406,9 +430,9 @@
           <span class="platform">Roblox</span>
           <span class="username">nublnprogrez</span>
         </div>
-        <svg class="social-logo" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#E2231A" d="M116 23.2 23.2 396l372.8 92.8L489 116zm149 115.6 69.4 17.4-17.2 69.2-69.4-17.4zm-52 208.8-69.4-17.4 17.2-69.2 69.4 17.4z"/>
-        </svg>
+        <img class="social-logo"
+             src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/robloxlogo.png"
+             alt="Roblox" />
       </a>
 
       <!-- Twitter / X -->
@@ -579,6 +603,63 @@
       }, 350);
     }
   }
+  /* ── 67 EASTER EGG ── */
+  const COMBO = ['6', '7'];
+  let comboIdx = 0;
+  let eggDone = false;
+
+  const egg67sfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/tungtungsahur.mp3');
+  egg67sfx.preload = 'auto';
+
+  document.addEventListener('keydown', (e) => {
+    if (eggDone) return;
+
+    if (e.key === COMBO[comboIdx]) {
+      comboIdx++;
+      if (comboIdx === COMBO.length) {
+        comboIdx = 0;
+        triggerEgg67();
+      }
+    } else {
+      comboIdx = e.key === COMBO[0] ? 1 : 0;
+    }
+  });
+
+  function triggerEgg67() {
+    eggDone = true;
+    const img = document.getElementById('egg67');
+
+    // reset to off-screen state (no transition yet)
+    img.classList.remove('rise', 'fade');
+    img.style.opacity = '1';
+    img.style.bottom = '-120vh';
+    img.style.transform = 'translateX(-50%) rotate(-18deg)';
+
+    // play audio
+    egg67sfx.currentTime = 0;
+    egg67sfx.play().catch(() => {});
+
+    // small delay then rise
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        img.classList.add('rise');
+      });
+    });
+
+    // when audio ends, start fade-out and then remove
+    egg67sfx.addEventListener('ended', () => {
+      img.classList.remove('rise');
+      img.classList.add('fade');
+      img.addEventListener('transitionend', () => {
+        img.remove();
+      }, { once: true });
+    }, { once: true });
+  }
 </script>
+<!-- 67 EASTER EGG -->
+<img id="egg67"
+     src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/67.jpg"
+     alt="" />
+
 </body>
 </html>
