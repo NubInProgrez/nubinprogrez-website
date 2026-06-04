@@ -244,7 +244,6 @@
       font-family: var(--font);
     }
 
-    /* ─── PORTFOLIO CARDS ─────────────────────────────── */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -285,7 +284,6 @@
       line-height: 1.5;
     }
 
-    /* YouTube embed wrapper — 16:9 ratio */
     .card-video {
       position: relative;
       width: 100%;
@@ -305,7 +303,6 @@
       border-radius: 8px;
     }
 
-    /* ─── SOCIAL CARDS ─────────────────────────────────── */
     .social-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -362,7 +359,6 @@
       font-family: var(--font);
     }
 
-    /* ─── EASTER EGG ────────────────────────────────────── */
     #vilt-overlay {
       position: fixed;
       inset: 0;
@@ -464,10 +460,9 @@
 
 <div id="content">
 
-  <!-- ════════════════ ABOUT ════════════════ -->
   <div id="about" class="section">
     <h2>About me</h2>
-    <p>hi im nubin and i like making cool stuff. i love java, lua and js</p>
+    <p>Hi im nubin and i like making stuff, i like java, lua and js. My main language is spanish but i also speak english</p>
 
     <p class="section-sub">Find me on</p>
     <div class="social-cards">
@@ -492,10 +487,10 @@
              alt="Roblox" />
       </a>
 
-      <a class="social-card twitter" href="https://x.com/nubinscript" target="_blank" rel="noopener">
+      <a class="social-card twitter" href="https://x.com/nubforia" target="_blank" rel="noopener">
         <div class="social-info">
           <span class="platform">Twitter / X</span>
-          <span class="username">nubinscript</span>
+          <span class="username">nubforia</span>
         </div>
         <svg class="social-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path fill="#1DA1F2" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -505,75 +500,139 @@
     </div>
   </div>
 
-  <!-- ════════════════ PORTFOLIO ════════════════ -->
-  <!--
-    ╔══════════════════════════════════════════════════════════════╗
-    ║  PARA AÑADIR MÁS CARDS: copia uno de los bloques de abajo   ║
-    ║  (desde <div class="card"> hasta su </div> de cierre)        ║
-    ║  y pégalo dentro de <div class="cards">.                     ║
-    ║  Solo cambia el título, la descripción y el VIDEO_ID.        ║
-    ║                                                              ║
-    ║  VIDEO_ID: en youtube.com/watch?v=VIDEO_ID                   ║
-    ║  o youtu.be/VIDEO_ID  ← ese es el ID que pones abajo        ║
-    ╚══════════════════════════════════════════════════════════════╝
-  -->
   <div id="portfolio" class="section">
     <h2>Portfolio</h2>
-    <p>some stuff i made</p>
+    <p>Some stuff I made over the past years (some are lost media, if code is needed please send me a dm on discord and provide info in case of wanting to hire me)</p>
     <div class="cards">
 
-      <!-- ── CARD 1 ── copia desde aquí ── -->
       <div class="card">
-        <h3>a</h3>
-        <p>asd</p>
+        <h3>Minecraft - Auction plugin</h3>
+        <p>DONUT SMP auction inspired plugin, has more features such as /shop, /balance, etc</p>
         <div class="card-video">
           <iframe
-            src="https://www.youtube.com/embed/VIDEO_ID_AQUI"
-            title="a"
+            src="https://www.youtube.com/watch?v=z2kJd7okkiU"
+            title="Minecraft - Auction plugin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen>
           </iframe>
         </div>
       </div>
-      <!-- ── hasta aquí ── -->
 
-      <!-- ── CARD 2 ── copia desde aquí ── -->
       <div class="card">
-        <h3>b</h3>
-        <p>asd</p>
+        <h3>Discord bot that sends files to google drive folders</h3>
+        <p>The title says it all, uses OAuth2 to upload them into a googles drive folder (by ids), uses the bots folder for temp files</p>
         <div class="card-video">
           <iframe
-            src="https://www.youtube.com/embed/VIDEO_ID_AQUI"
-            title="b"
+            src="https://www.youtube.com/watch?v=etmW6GzSxCQ"
+            title="Discord bot that sends files to google drive folders"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen>
           </iframe>
         </div>
       </div>
-      <!-- ── hasta aquí ── -->
 
-      <!-- ── CARD 3 ── copia desde aquí ── -->
       <div class="card">
-        <h3>c</h3>
-        <p>asd</p>
+        <h3>GTD - Shiki Ryougi cutscene</h3>
+        <p>cutscene made for a td game</p>
         <div class="card-video">
           <iframe
-            src="https://www.youtube.com/embed/VIDEO_ID_AQUI"
-            title="c"
+            src="https://www.youtube.com/watch?v=_aN3zrxQmyw"
+            title="GTD - Shiki Ryougi cutscene"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen>
           </iframe>
         </div>
       </div>
-      <!-- ── hasta aquí ── -->
+  
+     <div class="card">
+        <h3>DBG - Super saiyan Cutscene</h3>
+        <p>cutscene made for a old db game i had (2024)</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/watch?v=HDgNMvBt928"
+            title="DBG - Super saiyan Cutscene"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
 
+       <div class="card">
+        <h3>Ki blast debris and Ki Charge</h3>
+        <p>old stuff I made for a old db game (2024)</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/watch?v=P2XjAUJ9MeQ"
+            title="Ki blast debris and Ki Charge"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Lock on</h3>
+        <p>old stuff I made for a old db game (2024)</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/watch?v=Y80B19_sTtk"
+            title="old stuff I made for a db game (2024)"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+     
+     <div class="card">
+        <h3>UI tweens</h3>
+        <p>old stuff I made for a old game (2025)</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/watch?v=iaR9EYJL-y8"
+            title="old stuff I made for a game (2025)"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+
+       <div class="card">
+        <h3>Super saiyan 2 cutscene</h3>
+        <p>old stuff I made for a old db game (2023)</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/watch?v=KPtT09KYlGk"
+            title="old stuff I made for a game (2023)"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Unlimited Blade works skill</h3>
+        <p>old stuff I made for a old fate game (2019)</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/watch?v=cgRxiWW3H_8"
+            title="old stuff I made for a game (2019)"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      
+      
+      
     </div>
   </div>
 
 </div>
 
 <script>
-  /* ─── RIPPLES ──────────────────────────────────── */
+
   const rCanvas = document.getElementById('ripples');
   const rCtx = rCanvas.getContext('2d');
   let ripples = [];
@@ -624,7 +683,6 @@
   resizeRipples();
   requestAnimationFrame(drawRipples);
 
-  /* ─── STARS ────────────────────────────────────── */
   const canvas = document.getElementById('stars');
   const ctx = canvas.getContext('2d');
   let stars = [];
@@ -663,7 +721,6 @@
   window.addEventListener('resize', () => { resize(); initStars(); resizeRipples(); });
   resize(); initStars(); requestAnimationFrame(drawStars);
 
-  /* ─── NAV ──────────────────────────────────────── */
   const clickSfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/clicksfx.mp3');
   clickSfx.preload = 'auto';
 
@@ -703,7 +760,6 @@
     }
   }
 
-  /* ─── EASTER EGG ───────────────────────────────── */
   const COMBO = ['6', '7'];
   let comboIdx = 0;
   let eggDone = false;
