@@ -244,30 +244,68 @@
       font-family: var(--font);
     }
 
+    /* ─── PORTFOLIO CARDS ─────────────────────────────── */
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1.2rem;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.4rem;
       margin-top: 2rem;
     }
 
     .card {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 1.4rem;
-      transition: transform 0.2s, background 0.2s;
+      transition: transform 0.2s, background 0.2s, border-color 0.2s;
       font-family: var(--font);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
     }
 
     .card:hover {
       transform: translateY(-4px);
       background: rgba(123,140,255,0.08);
+      border-color: rgba(123,140,255,0.25);
     }
 
-    .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; font-family: var(--font); }
-    .card p  { font-size: 0.9rem; color: var(--dim); font-weight: 300; font-family: var(--font); }
+    .card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--white);
+      font-family: var(--font);
+    }
 
+    .card p {
+      font-size: 0.9rem;
+      color: var(--dim);
+      font-weight: 300;
+      font-family: var(--font);
+      line-height: 1.5;
+    }
+
+    /* YouTube embed wrapper — 16:9 ratio */
+    .card-video {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 */
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      margin-top: 0.4rem;
+    }
+
+    .card-video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+    }
+
+    /* ─── SOCIAL CARDS ─────────────────────────────────── */
     .social-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -324,6 +362,7 @@
       font-family: var(--font);
     }
 
+    /* ─── EASTER EGG ────────────────────────────────────── */
     #vilt-overlay {
       position: fixed;
       inset: 0;
@@ -424,6 +463,8 @@
 <div id="brand">nubinprogrez</div>
 
 <div id="content">
+
+  <!-- ════════════════ ABOUT ════════════════ -->
   <div id="about" class="section">
     <h2>About me</h2>
     <p>hi im nubin and i like making cool stuff. i love java, lua and js</p>
@@ -463,19 +504,76 @@
 
     </div>
   </div>
+
+  <!-- ════════════════ PORTFOLIO ════════════════ -->
+  <!--
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  PARA AÑADIR MÁS CARDS: copia uno de los bloques de abajo   ║
+    ║  (desde <div class="card"> hasta su </div> de cierre)        ║
+    ║  y pégalo dentro de <div class="cards">.                     ║
+    ║  Solo cambia el título, la descripción y el VIDEO_ID.        ║
+    ║                                                              ║
+    ║  VIDEO_ID: en youtube.com/watch?v=VIDEO_ID                   ║
+    ║  o youtu.be/VIDEO_ID  ← ese es el ID que pones abajo        ║
+    ╚══════════════════════════════════════════════════════════════╝
+  -->
   <div id="portfolio" class="section">
     <h2>Portfolio</h2>
     <p>some stuff i made</p>
     <div class="cards">
-      <div class="card"><h3>a</h3><p>asd</p></div>
-      <div class="card"><h3>b</h3><p>asd</p></div>
-      <div class="card"><h3>c</h3><p>asd</p></div>
+
+      <!-- ── CARD 1 ── copia desde aquí ── -->
+      <div class="card">
+        <h3>a</h3>
+        <p>asd</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/embed/VIDEO_ID_AQUI"
+            title="a"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      <!-- ── hasta aquí ── -->
+
+      <!-- ── CARD 2 ── copia desde aquí ── -->
+      <div class="card">
+        <h3>b</h3>
+        <p>asd</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/embed/VIDEO_ID_AQUI"
+            title="b"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      <!-- ── hasta aquí ── -->
+
+      <!-- ── CARD 3 ── copia desde aquí ── -->
+      <div class="card">
+        <h3>c</h3>
+        <p>asd</p>
+        <div class="card-video">
+          <iframe
+            src="https://www.youtube.com/embed/VIDEO_ID_AQUI"
+            title="c"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      <!-- ── hasta aquí ── -->
+
     </div>
   </div>
+
 </div>
 
 <script>
-
+  /* ─── RIPPLES ──────────────────────────────────── */
   const rCanvas = document.getElementById('ripples');
   const rCtx = rCanvas.getContext('2d');
   let ripples = [];
@@ -496,26 +594,21 @@
     });
   }
 
-  for (let i = 0; i < 7; i++) {
-    setTimeout(spawnRipple, i * 900);
-  }
+  for (let i = 0; i < 7; i++) { setTimeout(spawnRipple, i * 900); }
   setInterval(spawnRipple, 1400);
 
   function drawRipples() {
     rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
     ripples = ripples.filter(rp => rp.r < rp.maxR);
-
     ripples.forEach(rp => {
       rp.r += rp.speed;
-      const progress = rp.r / rp.maxR;         
-      const alpha = rp.alpha * (1 - progress); //bola rara  crece en radio alfa
-
+      const progress = rp.r / rp.maxR;
+      const alpha = rp.alpha * (1 - progress);
       rCtx.beginPath();
       rCtx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
       rCtx.strokeStyle = `rgba(0, 5, 30, ${alpha * 1.6})`;
       rCtx.lineWidth = 28 * (1 - progress * 0.5);
       rCtx.stroke();
-
       const grad = rCtx.createRadialGradient(rp.x, rp.y, 0, rp.x, rp.y, rp.r);
       grad.addColorStop(0,   `rgba(0, 4, 20, ${alpha * 0.55})`);
       grad.addColorStop(0.6, `rgba(0, 4, 20, ${alpha * 0.2})`);
@@ -525,13 +618,13 @@
       rCtx.fillStyle = grad;
       rCtx.fill();
     });
-
     requestAnimationFrame(drawRipples);
   }
 
   resizeRipples();
   requestAnimationFrame(drawRipples);
 
+  /* ─── STARS ────────────────────────────────────── */
   const canvas = document.getElementById('stars');
   const ctx = canvas.getContext('2d');
   let stars = [];
@@ -567,13 +660,10 @@
     requestAnimationFrame(drawStars);
   }
 
-  window.addEventListener('resize', () => {
-    resize(); initStars();
-    resizeRipples();
-  });
-
+  window.addEventListener('resize', () => { resize(); initStars(); resizeRipples(); });
   resize(); initStars(); requestAnimationFrame(drawStars);
 
+  /* ─── NAV ──────────────────────────────────────── */
   const clickSfx = new Audio('https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/clicksfx.mp3');
   clickSfx.preload = 'auto';
 
@@ -612,6 +702,8 @@
       }, 350);
     }
   }
+
+  /* ─── EASTER EGG ───────────────────────────────── */
   const COMBO = ['6', '7'];
   let comboIdx = 0;
   let eggDone = false;
@@ -634,10 +726,7 @@
 
   function randRot() { return (Math.random() * 34 - 17).toFixed(1); }
   function randPos() {
-    return {
-      left: (15 + Math.random() * 55) + 'vw',
-      top:  (10 + Math.random() * 55) + 'vh'
-    };
+    return { left: (15 + Math.random() * 55) + 'vw', top: (10 + Math.random() * 55) + 'vh' };
   }
 
   function makeText(content, color) {
@@ -653,8 +742,8 @@
     return el;
   }
 
-  function showEl(el)  { requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add('show'); el.classList.remove('hide'); }); }); }
-  function hideEl(el)  { el.classList.add('hide'); el.classList.remove('show'); setTimeout(() => el.remove(), 250); }
+  function showEl(el) { requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add('show'); el.classList.remove('hide'); }); }); }
+  function hideEl(el) { el.classList.add('hide'); el.classList.remove('show'); setTimeout(() => el.remove(), 250); }
 
   function centerText(content, color) {
     const el = document.createElement('div');
@@ -670,25 +759,19 @@
 
   function triggerViltrumite() {
     eggDone = true;
-
     const overlay = document.getElementById('vilt-overlay');
     const emperorImg = document.getElementById('vilt-emperor-img');
-
     overlay.classList.add('show');
-
     viltSfx.currentTime = 0;
     viltSfx.play().catch(() => {});
-
     let activeEls = [];
 
     const t1 = makeText("IM NOT", '#ffffff');
-    showEl(t1);
-    activeEls.push(t1);
+    showEl(t1); activeEls.push(t1);
 
     setTimeout(() => {
       const t2 = makeText("A VILTRUMITE!", '#ff1a1a');
-      showEl(t2);
-      activeEls.push(t2);
+      showEl(t2); activeEls.push(t2);
     }, 450);
 
     viltSfx.addEventListener('timeupdate', function onTime() {
@@ -696,49 +779,36 @@
 
       if (ct >= 2.0 && !viltSfx._phase2) {
         viltSfx._phase2 = true;
-        activeEls.forEach(el => hideEl(el));
-        activeEls = [];
-
+        activeEls.forEach(el => hideEl(el)); activeEls = [];
         const t3 = centerText("YOU SHOULDN'T HAVE LEFT ME IN CHARGE", '#ffffff');
         t3.style.fontSize = 'clamp(1.8rem, 5vw, 4rem)';
-        showEl(t3);
-        activeEls.push(t3);
+        showEl(t3); activeEls.push(t3);
       }
 
       if (ct >= 3.2 && !viltSfx._phase3) {
         viltSfx._phase3 = true;
-        activeEls.forEach(el => hideEl(el));
-        activeEls = [];
+        activeEls.forEach(el => hideEl(el)); activeEls = [];
       }
 
       if (ct >= 4.1 && !viltSfx._phase4) {
         viltSfx._phase4 = true;
-        activeEls.forEach(el => hideEl(el));
-        activeEls = [];
-
+        activeEls.forEach(el => hideEl(el)); activeEls = [];
         const t4 = makeText("YOU ARE", '#ffffff');
-        showEl(t4);
-        activeEls.push(t4);
-
+        showEl(t4); activeEls.push(t4);
         setTimeout(() => {
           const t5 = centerText("THE EMPEROR", '#ff1a1a');
-          showEl(t5);
-          activeEls.push(t5);
+          showEl(t5); activeEls.push(t5);
         }, 300);
       }
 
       if (ct >= 5.1 && !viltSfx._phase5) {
         viltSfx._phase5 = true;
-        activeEls.forEach(el => hideEl(el));
-        activeEls = [];
-
+        activeEls.forEach(el => hideEl(el)); activeEls = [];
         emperorImg.style.transition = 'none';
         emperorImg.style.opacity    = '1';
         emperorImg.style.bottom     = '-120vh';
         emperorImg.style.transform  = 'translateX(-50%) rotate(-22deg)';
-
         void emperorImg.offsetHeight;
-
         emperorImg.style.transition = 'bottom 1.4s cubic-bezier(.22,1,.36,1), transform 1.4s cubic-bezier(.22,1,.36,1)';
         emperorImg.style.bottom     = '8vh';
         emperorImg.style.transform  = 'translateX(-50%) rotate(0deg)';
@@ -750,7 +820,6 @@
       emperorImg.style.opacity    = '0';
       overlay.style.transition    = 'opacity 3s ease';
       overlay.style.opacity       = '0';
-
       setTimeout(() => {
         emperorImg.style.bottom    = '-120vh';
         emperorImg.style.transition = 'none';
@@ -759,6 +828,7 @@
     }, { once: true });
   }
 </script>
+
 <div id="vilt-overlay"></div>
 <img id="vilt-emperor-img"
      src="https://raw.githubusercontent.com/NubInProgrez/nubinprogrez-website/main/tungtungemperor.png"
