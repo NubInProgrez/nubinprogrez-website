@@ -1,22 +1,34 @@
 import {FORMATS,cropRect,outputSize,selection,buildCommand,encoding} from './engine.mjs';
+import {MediaTimeline,parseTimeCode} from './timeline.mjs';
 const $=id=>document.getElementById(id),media=$('media'),canvas=$('preview'),ctx=canvas.getContext('2d');
 let file=null,meta=null,clips=[],sourceURL=null,resultURL=null,wave=null,busy=false,engine=null,enginePromise=null,cancelled=false;
 let renderFrame=0,exportDuration=1,stageStart=0,stageSpan=100,audioContext=null;
-// Separate, keyboard-accessible drag handles keep timeline edits precise.
-const trimSliders=document.createElement('div');trimSliders.className='trim-sliders';
-trimSliders.innerHTML='<label>Inicio <input id="trim-start" type="range" min="0" max="1" step="0.01" value="0" aria-label="Arrastrar inicio del corte"></label><label>Fin <input id="trim-end" type="range" min="0" max="1" step="0.01" value="1" aria-label="Arrastrar fin del corte"></label>';
-document.querySelector('.ruler').after(trimSliders);
+const timeline=new MediaTimeline($('timeline-strip'),{onSeek:seekPreview,onTrim:(edge,at)=>{$(edge).value=time(at);update()},onInteraction:()=>media.pause()});
 const MAX=500*1024*1024;
-const audioExt=/\.(mp3|wav|m4a|aac|flac|ogg|opus|aiff|wma)$/i;
-const number=id=>Number($(id).value);
-const time=n=>{n=Math.max(0,Number(n)||0);return `${Math.floor(n/60).toString().padStart(2,'0')}:${(n%60).toFixed(2).padStart(5,'0')}`};
-function status(message,error=false){$('status').textContent=message;$('status').parentElement.classList.toggle('error',error)}
+const number=id=>{
+ const value=$(id).value;
+ // Preserve the full source duration when its displayed timecode is rounded.
+ if(id==='end'&&meta&&value===time(meta.duration))return meta.duration;
+ return id==='start'||id==='end'?parseTimeCode(value):Number(value);
+};
+const time=n=>{const ticks=Math.round(Math.max(0,Number(n)||0)*100),secs=Math.floor(ticks/100);return `${Math.floor(secs/60).toString().padStart(2,'0')}:${(secs%60).toString().padStart(2,'0')}.${String(ticks%100).padStart(2,'0')}`};
+function status(message,error=false){$('status').textContent=message;$('status').parentElement.classList.toggle('error',error);$('status').parentElement.hidden=false;$('close-status').hidden=busy||!document.body.classList.contains('has-file')}
+function seekPreview(at){if(!meta)return;media.currentTime=Math.max(0,Math.min(at,meta.duration));timeline.setTime(at);syncPlayback();}
+function syncPlayback(){timeline.setTime(media.currentTime);$('clock').textContent=`${time(media.currentTime)} / ${time(meta?.duration)}`;}
+const toolTitles={cut:'Recortar',crop:'Encuadre',rotate:'Girar y reflejar',color:'Color',audio:'Audio',speed:'Velocidad',join:'Unir archivos'};
+function openTool(tool){
+ document.querySelectorAll('.tool-tab').forEach(el=>{const active=el.dataset.tool===tool;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active))});
+ $('tool-panel').hidden=tool==='cut';$('tool-panel-title').textContent=toolTitles[tool];
+ document.querySelectorAll('[data-panel]').forEach(el=>el.hidden=el.dataset.panel!==tool);
+}
+function showExport(){if(!file||busy)return;openTool('cut');$('export-dialog').showModal()}
 function options(){return {start:number('start'),end:number('end'),cut:document.querySelector('[name=cut]:checked').value,speed:number('speed'),rotation:number('rotation'),aspect:$('aspect').value,cropX:number('crop-x'),cropY:number('crop-y'),cropW:number('crop-w'),cropH:number('crop-h'),flipH:$('flip-h').checked,flipV:$('flip-v').checked,brightness:number('brightness'),contrast:number('contrast'),volume:number('volume'),mute:$('mute').checked,fadeIn:number('fade-in'),fadeOut:number('fade-out'),format:$('format').value,resolution:$('resolution').value,quality:$('quality').value}}
 function setBusy(value){
- busy=value;document.querySelectorAll('aside fieldset').forEach(e=>e.disabled=value);
- for(const id of ['export','reset','replace','add-clips','file','clips','start','end','mark-start','mark-end','trim-start','trim-end'])$(id).disabled=value;
+ busy=value;document.querySelectorAll('aside fieldset,dialog fieldset').forEach(e=>e.disabled=value);
+ for(const id of ['export','save','save-settings','reset','replace','add-clips','file','clips','start','end'])$(id).disabled=value;
+ document.querySelectorAll('.tool-tab').forEach(e=>e.disabled=value);timeline.setDisabled(value);
  document.querySelectorAll('[name=cut],#clip-list button').forEach(e=>e.disabled=value);
- $('cancel').hidden=!value;$('cancel').disabled=false;$('progress').hidden=!value;
+ $('cancel').hidden=!value;$('cancel').disabled=false;$('progress').hidden=!value;$('close-status').hidden=value||!file;
  if(value){cancelled=false;media.pause();$('progress').value=0}else $('export').textContent='Exportar y descargar ↗';
 }
 function clearResult(){if(resultURL)URL.revokeObjectURL(resultURL);resultURL=null;$('download').hidden=true;$('download').removeAttribute('href')}
@@ -60,16 +72,16 @@ function formatUI(){
  $('format-note').textContent=format==='gif'?'GIF no incluye audio. Exporta 12 fotogramas por segundo.':!isVideo&&meta?.hasVideo?'Se extraerá la pista de audio del video.':'La exportación aplica los ajustes seleccionados.';
 }
 function defaults(){
- const values={start:0,end:meta.duration.toFixed(3),speed:1,rotation:0,aspect:'original','crop-x':0,'crop-y':0,'crop-w':100,'crop-h':100,brightness:100,contrast:100,volume:100,'fade-in':0,'fade-out':0,resolution:'original',quality:'medium'};
+ const values={start:time(0),end:time(meta.duration),speed:1,rotation:0,aspect:'original','crop-x':0,'crop-y':0,'crop-w':100,'crop-h':100,brightness:100,contrast:100,volume:100,'fade-in':0,'fade-out':0,resolution:'original',quality:'medium'};
  for(const[id,value]of Object.entries(values))$(id).value=value;
  for(const id of ['flip-h','flip-v','mute'])$(id).checked=false;
- document.querySelector('[name=cut][value=keep]').checked=true;$('loop').checked=true;$('crop-fields').hidden=true;
- media.currentTime=0;$('seek').value=0;update();
+ document.querySelector('[name=cut][value=keep]').checked=true;$('loop').checked=false;$('crop-fields').hidden=true;
+ media.currentTime=0;timeline.setTime(0);openTool('cut');update();
 }
 async function openFile(f){
  if(!f||busy)return;
  try{validateFile(f)}catch(e){status(e.message,true);return}
- clearResult();media.pause();if(sourceURL)URL.revokeObjectURL(sourceURL);file=f;wave=null;clips=[];renderClips();$('workspace').hidden=true;$('dropzone').hidden=false;
+ clearResult();media.pause();timeline.resetSource();if(sourceURL)URL.revokeObjectURL(sourceURL);file=f;wave=null;clips=[];renderClips();$('workspace').hidden=true;$('dropzone').hidden=false;document.body.classList.remove('has-file');
  sourceURL=URL.createObjectURL(f);status('Leyendo archivo…');setBusy(true);
  const browserMeta=await new Promise(resolve=>{
   const timer=setTimeout(()=>done(null),8000);
@@ -82,33 +94,34 @@ async function openFile(f){
   meta=browserMeta;
   if(!meta){const ff=await getEngine();await ff.writeFile('inspect',new Uint8Array(await f.arrayBuffer()));try{meta=await probe(ff,'inspect')}finally{await ff.deleteFile('inspect')}}
   if(cancelled)return;
-  $('workspace').hidden=false;$('dropzone').hidden=true;$('filename').textContent=f.name;
+  $('workspace').hidden=false;$('dropzone').hidden=true;document.body.classList.add('has-file');$('filename').textContent=f.name;$('filename').title=f.name;
   $('file-kind').textContent=meta.hasVideo?'VIDEO':'AUDIO';$('fileinfo').textContent=`${time(meta.duration)} · ${(f.size/1048576).toFixed(1)} MB${meta.hasVideo?` · ${meta.width} × ${meta.height}`:''}`;
-  $('video-settings').hidden=!meta.hasVideo;$('seek').max=meta.duration;$('duration-label').textContent=time(meta.duration);$('start').max=meta.duration;$('end').max=meta.duration;
-  $('trim-start').max=meta.duration;$('trim-end').max=meta.duration;
+  document.querySelectorAll('.video-only').forEach(el=>el.hidden=!meta.hasVideo);
+  timeline.setSource(sourceURL,{...meta,canPreview:!!browserMeta});
   $('preview-note').hidden=!!browserMeta;$('preview-note').textContent='Este formato no tiene vista previa en tu navegador. Puedes editar por tiempo y exportar a MP4 o MP3.';
-  updateFormats();defaults();status('Archivo listo. Ajusta tu selección y exporta cuando quieras.');
+  updateFormats();defaults();status('Archivo listo. Arrastra los bordes de la tira para recortar.');
+  $('status').parentElement.hidden=true;
   if(!meta.hasVideo&&browserMeta)decodeWave(f);
   draw();
  }catch(e){if(!cancelled)status(e.message,true)}finally{setBusy(false)}
 }
 async function decodeWave(f){
  if(f.size>80*1024*1024)return;
- try{audioContext ||=new AudioContext();const buffer=await audioContext.decodeAudioData(await f.arrayBuffer());if(file!==f)return;const samples=buffer.getChannelData(0),bins=700;wave=Array.from({length:bins},(_,i)=>{let max=0;const a=Math.floor(i*samples.length/bins),b=Math.floor((i+1)*samples.length/bins);for(let j=a;j<b;j+=Math.max(1,Math.floor((b-a)/100)))max=Math.max(max,Math.abs(samples[j]));return max});draw()}catch{/* Native playback still works without a waveform. */}
+ try{audioContext ||=new AudioContext();const buffer=await audioContext.decodeAudioData(await f.arrayBuffer());if(file!==f)return;const samples=buffer.getChannelData(0),bins=700;wave=Array.from({length:bins},(_,i)=>{let max=0;const a=Math.floor(i*samples.length/bins),b=Math.floor((i+1)*samples.length/bins);for(let j=a;j<b;j+=Math.max(1,Math.floor((b-a)/100)))max=Math.max(max,Math.abs(samples[j]));return max});timeline.setWave(wave);draw()}catch{/* Native playback still works without a waveform. */}
 }
 function update(){
  if(!meta)return;
  $('crop-fields').hidden=$('aspect').value!=='custom';
  for(const name of ['brightness','contrast','volume'])$(name+'-value').textContent=$(name).value+'%';
  media.playbackRate=number('speed');media.volume=Math.min(1,number('volume')/100);media.muted=$('mute').checked;
- $('clock').textContent=`${time(media.currentTime)} / ${time(meta.duration)}`;
- $('trim-start').value=$('start').value;$('trim-end').value=$('end').value;
+ syncPlayback();timeline.setSelection(number('start'),number('end'),document.querySelector('[name=cut]:checked').value==='remove');
  try{const {duration}=selection(meta,options());$('selection-label').textContent=`Resultado: ${time(duration)}`}catch{$('selection-label').textContent='Revisa el inicio y el fin'}
  draw();
 }
 function draw(){
  cancelAnimationFrame(renderFrame);ctx.fillStyle='#03050f';ctx.fillRect(0,0,960,540);
  if(!meta)return;
+ syncPlayback();
  const o=options();
  if(meta.hasVideo&&media.readyState>=2){
   const c=cropRect(media.videoWidth||meta.width,media.videoHeight||meta.height,o),sw=o.rotation%180?c.h:c.w,sh=o.rotation%180?c.w:c.h,scale=Math.min(940/sw,520/sh);
@@ -130,7 +143,7 @@ async function run(ff,args,duration,label,start,span){
 async function exportFile(){
  if(!file||busy)return;const o=options();
  try{selection(meta,o);if(o.fadeIn<0||o.fadeOut<0||!Number.isFinite(o.fadeIn+o.fadeOut))throw Error('Los fundidos deben ser números positivos o cero.')}catch(e){status(e.message,true);return}
- setBusy(true);clearResult();$('logs').textContent='';$('technical').hidden=true;const clean=[];
+ $('export-dialog').close();openTool('cut');setBusy(true);clearResult();$('logs').textContent='';$('technical').hidden=true;const clean=[];
  try{
   const ff=await getEngine();if(cancelled)return;
   const input='source';clean.push(input);await ff.writeFile(input,new Uint8Array(await file.arrayBuffer()));const actual=await probe(ff,input);
@@ -168,27 +181,32 @@ window.addEventListener('dragover',e=>e.preventDefault());window.addEventListene
 $('reset').onclick=()=>{defaults();status('Ajustes restablecidos.');clearResult()};
 $('format').onchange=formatUI;
 document.querySelectorAll('aside input,aside select,#start,#end,[name=cut]').forEach(el=>el.addEventListener('input',update));
-$('seek').oninput=()=>{media.currentTime=number('seek');draw()};
-$('trim-start').oninput=()=>{$('start').value=Math.min(number('trim-start'),Math.max(0,number('end')-.01)).toFixed(2);update()};
-$('trim-end').oninput=()=>{$('end').value=Math.min(meta.duration,Math.max(number('trim-end'),number('start')+.01)).toFixed(2);update()};
-$('mark-start').onclick=()=>{$('start').value=media.currentTime.toFixed(2);update()};$('mark-end').onclick=()=>{$('end').value=media.currentTime.toFixed(2);update()};
-$('to-start').onclick=()=>{media.currentTime=number('start');draw()};
+for(const id of ['start','end'])$(id).addEventListener('change',()=>{const at=number(id);if(Number.isFinite(at)){$(id).value=time(at);update();media.pause();seekPreview(at)}});
+$('to-start').onclick=()=>{media.pause();seekPreview(number('start')||0)};
+document.querySelectorAll('.tool-tab').forEach(el=>el.onclick=()=>openTool(el.dataset.tool));
+$('close-tool').onclick=$('apply-tool').onclick=()=>openTool('cut');
+$('rotate-left').onclick=()=>{$('rotation').value=String((number('rotation')+270)%360);update()};
+$('rotate-right').onclick=()=>{$('rotation').value=String((number('rotation')+90)%360);update()};
+$('save').onclick=$('save-settings').onclick=showExport;$('close-export').onclick=()=>$('export-dialog').close();
+$('close-status').onclick=()=>{$('status').parentElement.hidden=true};
+$('export-dialog').addEventListener('click',e=>{if(e.target===$('export-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close()}});
 $('play').onclick=async()=>{
  if(!file)return;if(!media.paused){media.pause();return}
- const o=options();if(o.cut==='keep'&&(media.currentTime<o.start||media.currentTime>=o.end))media.currentTime=o.start;
+ const o=options();if(media.currentTime>=meta.duration-.01)media.currentTime=$('loop').checked&&o.cut==='keep'?o.start:0;
+ if($('loop').checked&&o.cut==='keep'&&(media.currentTime<o.start||media.currentTime>=o.end))media.currentTime=o.start;
  try{await media.play()}catch{status('Este navegador no puede reproducir el archivo original. Puedes exportarlo a un formato compatible.',true)}
 };
-media.addEventListener('play',()=>{$('play').textContent='Ⅱ Pausar';draw()});media.addEventListener('pause',()=>{$('play').textContent='▶ Reproducir'});
+media.addEventListener('play',()=>{$('play').textContent='Ⅱ';draw()});media.addEventListener('pause',()=>{$('play').textContent='▶';syncPlayback()});
 media.addEventListener('loadeddata',draw);media.addEventListener('seeked',draw);
 media.addEventListener('timeupdate',()=>{
- $('seek').value=media.currentTime;$('clock').textContent=`${time(media.currentTime)} / ${time(meta?.duration)}`;
- if(media.paused||!meta)return;const o=options();
- if(o.cut==='keep'&&media.currentTime>=o.end){if($('loop').checked)media.currentTime=o.start;else media.pause()}
+ syncPlayback();
+ if(media.paused||!meta||!$('loop').checked)return;const o=options();
+ if(o.cut==='keep'&&o.end>o.start&&media.currentTime>=o.end)media.currentTime=o.start;
  if(o.cut==='remove'&&media.currentTime>=o.start&&media.currentTime<o.end)media.currentTime=o.end;
 });
 media.addEventListener('ended',()=>{if($('loop').checked&&meta){media.currentTime=options().cut==='keep'?number('start'):0;media.play().catch(()=>{})}});
 $('export').onclick=exportFile;
 $('cancel').onclick=()=>{cancelled=true;engine?.terminate();engine=null;enginePromise=null;$('cancel').disabled=true;status('Procesamiento cancelado. Puedes cambiar los ajustes y volver a exportar.');};
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&file&&!busy&&!['INPUT','SELECT','BUTTON','TEXTAREA','A'].includes(e.target.tagName)){e.preventDefault();$('play').click()}});
-window.addEventListener('beforeunload',()=>{if(sourceURL)URL.revokeObjectURL(sourceURL);if(resultURL)URL.revokeObjectURL(resultURL);engine?.terminate();audioContext?.close()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('tool-panel').hidden)openTool('cut');if(e.code==='Space'&&file&&!busy&&!$('export-dialog').open&&!['INPUT','SELECT','BUTTON','TEXTAREA','A'].includes(e.target.tagName)){e.preventDefault();$('play').click()}});
+window.addEventListener('beforeunload',()=>{timeline.destroy();if(sourceURL)URL.revokeObjectURL(sourceURL);if(resultURL)URL.revokeObjectURL(resultURL);engine?.terminate();audioContext?.close()});
 if(location.protocol==='file:')status('Abre el sitio desde un servidor web (HTTP/HTTPS). El motor no puede ejecutarse abriendo el HTML con doble clic.',true);
