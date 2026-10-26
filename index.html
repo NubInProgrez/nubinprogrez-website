@@ -414,6 +414,12 @@
       transition: opacity 3s ease;
       opacity: 0;
     }
+    .editor-link { text-decoration: none; }
+    @media (max-width: 650px) {
+      #intro .nav-btn { padding: 1rem 0.8rem; font-size: 1.15rem; }
+      #intro .nav-btn .btn-icon { width: 2.7rem; height: 2.7rem; }
+      #topnav .nav-btn { padding-left: 0.7rem; padding-right: 0.7rem; font-size: 0.75rem; }
+    }
   </style>
 </head>
 <body>
@@ -422,7 +428,7 @@
 <canvas id="stars"></canvas>
 
 <div id="intro">
-  <span id="select-label">select between these two</span>
+  <span id="select-label">choose your space</span>
   <div class="nav-buttons">
     <button class="nav-btn" onclick="selectSection('about', this)">
       <img class="btn-icon"
@@ -437,6 +443,7 @@
            alt="Portfolio icon" />
       Portfolio
     </button>
+    <div class="divider"></div><a class="nav-btn editor-link" href="editor/"><svg class="btn-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="5" y="9" width="38" height="30" rx="7" stroke="currentColor" stroke-width="3"/><path d="m20 17 12 7-12 7V17Z" fill="currentColor"/><path d="M12 4v10M36 4v10M12 34v10M36 34v10" stroke="currentColor" stroke-width="3"/></svg>Media Studio</a>
   </div>
 </div>
 
@@ -454,6 +461,7 @@
          alt="Portfolio icon" />
     Portfolio
   </button>
+  <div class="divider"></div><a class="nav-btn editor-link" href="editor/"><svg class="btn-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="5" y="9" width="38" height="30" rx="7" stroke="currentColor" stroke-width="3"/><path d="m20 17 12 7-12 7V17Z" fill="currentColor"/><path d="M12 4v10M36 4v10M12 34v10M36 34v10" stroke="currentColor" stroke-width="3"/></svg>Media Studio</a>
 </nav>
 
 <div id="brand">nubinprogrez</div>
