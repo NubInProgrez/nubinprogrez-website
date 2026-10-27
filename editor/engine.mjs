@@ -55,18 +55,32 @@ export function encoding(format,quality='medium'){
   default:throw Error('Formato no válido.');
  }
 }
-export function buildCommand(input,output,meta,o,{normalizeSize=null,normalize=false}={}){
+export function buildCommand(input,output,meta,o,{normalizeSize=null,normalize=false,audioLayers=[]}={}){
  if(!FORMATS[o.format])throw Error('Formato no válido.');
  const video=FORMATS[o.format].video;
  if(video&&!meta.hasVideo)throw Error('Un archivo de audio no se puede exportar como video.');
- if(!video&&!meta.hasAudio)throw Error('El archivo no contiene una pista de audio.');
- if(!video&&o.mute)throw Error('Desactiva «Silenciar audio» para exportar un archivo de audio.');
- const {segments,duration}=selection(meta,o),audio=o.format!=='gif'&&(!o.mute||normalize)&&(meta.hasAudio||normalize);
+ const layers=audioLayers.filter(layer=>!layer.muted&&layer.volume>0);
+ if(!video&&!meta.hasAudio&&!layers.length)throw Error('El archivo no contiene una pista de audio. Añade un audio para exportar.');
+ if(!video&&o.mute&&!layers.length)throw Error('Desactiva «Silenciar audio» o añade otra pista para exportar audio.');
+ const {segments,duration}=selection(meta,o),audio=o.format!=='gif'&&(normalize||layers.length>0||(!o.mute&&meta.hasAudio));
  const args=['-i',input],f=[],v=[],a=[];
- if(audio&&!meta.hasAudio)args.push('-f','lavfi','-i','anullsrc=r=48000:cl=stereo');
+ let audioSources=[];
+ if(audio){
+  if(meta.hasAudio)f.push(`[0:a]volume=${o.mute?0:o.volume/100},aresample=48000,aformat=channel_layouts=stereo,apad,atrim=duration=${meta.duration}[abase]`);
+  else f.push(`anullsrc=r=48000:cl=stereo,atrim=duration=${meta.duration}[abase]`);
+  layers.forEach((layer,i)=>{
+   if(!Number.isFinite(layer.offset+layer.start+layer.end+layer.volume)||layer.offset<0||layer.start<0||layer.end<=layer.start)throw Error('Revisa la posición y el recorte de los audios añadidos.');
+   args.push('-i',layer.input);
+   f.push(`[${i+1}:a]atrim=start=${layer.start}:end=${layer.end},asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,volume=${layer.volume/100},adelay=${Math.round(layer.offset*1000)}:all=1[alayer${i}]`);
+  });
+  let source='[abase]';
+  if(layers.length){f.push(`[abase]${layers.map((_,i)=>`[alayer${i}]`).join('')}amix=inputs=${layers.length+1}:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95:level=0:latency=1[amixed]`);source='[amixed]'}
+  if(segments.length>1){audioSources=segments.map((_,i)=>`[asource${i}]`);f.push(`${source}asplit=${segments.length}${audioSources.join('')}`)}
+  else audioSources=[source];
+ }
  segments.forEach(([start,end],i)=>{
   if(video){f.push(`[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS[v${i}]`);v.push(`[v${i}]`)}
-  if(audio){f.push(`[${meta.hasAudio?'0':'1'}:a]atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${i}]`);a.push(`[a${i}]`)}
+  if(audio){f.push(`${audioSources[i]}atrim=start=${start}:end=${end},asetpts=PTS-STARTPTS[a${i}]`);a.push(`[a${i}]`)}
  });
  let vi=v[0],ai=a[0];
  if(segments.length>1){if(video){f.push(`${v.join('')}concat=n=${v.length}:v=1:a=0[vc]`);vi='[vc]'}if(audio){f.push(`${a.join('')}concat=n=${a.length}:v=0:a=1[ac]`);ai='[ac]'}}
@@ -81,10 +95,10 @@ export function buildCommand(input,output,meta,o,{normalizeSize=null,normalize=f
   f.push(`${vi}${vf.join(',')}[video]`);
  }
  if(audio){
-  const af=[...tempoFilters(o.speed),`volume=${o.mute?0:o.volume/100}`];
+  const af=[...tempoFilters(o.speed)];
   const fadeIn=Math.min(o.fadeIn,duration),fadeOut=Math.min(o.fadeOut,duration);
   if(fadeIn>0)af.push(`afade=t=in:d=${fadeIn}`);if(fadeOut>0)af.push(`afade=t=out:st=${Math.max(0,duration-fadeOut)}:d=${fadeOut}`);
-  af.push('aresample=48000','aformat=channel_layouts=stereo');f.push(`${ai}${af.join(',')}[audio]`);
+  af.push('aresample=48000','aformat=channel_layouts=stereo','apad',`atrim=duration=${duration}`);f.push(`${ai}${af.join(',')}[audio]`);
  }
  args.push('-filter_complex',f.join(';'));
  if(video)args.push('-map','[video]');else args.push('-vn');

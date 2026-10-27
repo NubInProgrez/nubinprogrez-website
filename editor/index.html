@@ -5,8 +5,8 @@
 <title>Media Studio · nubinprogrez</title>
 <meta name="description" content="Edita, corta y convierte video y audio en tu navegador con nubinprogrez.">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="editor.css?v=3">
-<script src="vendor/ffmpeg.js" defer></script><script type="module" src="editor.mjs?v=3"></script>
+<link rel="stylesheet" href="editor.css?v=4">
+<script src="vendor/ffmpeg.js" defer></script><script type="module" src="editor.mjs?v=4"></script>
 </head>
 <body>
 <header><a class="brand" href="../index.html">nubinprogrez<span> / media studio</span></a><a class="back" href="../index.html">← Volver al sitio</a></header>
@@ -37,7 +37,7 @@
   <div class="monitor-panel">
    <div class="monitor"><canvas id="preview" width="960" height="540" aria-label="Vista previa del archivo"></canvas><video id="media" playsinline preload="metadata" hidden></video><div id="crop-layer" hidden></div><div id="preview-note" hidden></div></div>
    <section class="timeline" aria-label="Edición de la duración">
-    <div id="timeline-strip"></div>
+    <div id="timeline-strip"></div><div id="audio-layers" hidden></div>
     <div class="timeline-bottom">
      <div class="transport"><button id="play" aria-label="Reproducir o pausar" title="Reproducir o pausar · Espacio">▶</button><output id="clock">00:00.00 / 00:00.00</output><button id="to-start" title="Ir al inicio del recorte" aria-label="Ir al inicio del recorte">↤</button></div>
      <div class="range-row"><label>Inicio <input id="start" aria-label="Inicio del corte en minutos y segundos" type="text" inputmode="decimal" value="00:00.00" spellcheck="false"></label><span class="time-separator">—</span><label>Fin <input id="end" aria-label="Fin del corte en minutos y segundos" type="text" inputmode="decimal" value="00:00.00" spellcheck="false"></label></div>
@@ -51,7 +51,7 @@
 
    <fieldset data-panel="rotate" hidden><legend>Giro y reflejo</legend><label class="control">Girar<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label><div class="rotate-actions"><button id="rotate-left" title="Girar 90° a la izquierda">↶ Izquierda</button><button id="rotate-right" title="Girar 90° a la derecha">↷ Derecha</button></div><div class="checks"><label><input id="flip-h" type="checkbox"> Espejo horizontal</label><label><input id="flip-v" type="checkbox"> Espejo vertical</label></div></fieldset>
    <fieldset data-panel="color" hidden><legend>Color</legend><label class="control">Brillo <output id="brightness-value">100%</output><input id="brightness" type="range" min="20" max="200" value="100"></label><label class="control">Contraste <output id="contrast-value">100%</output><input id="contrast" type="range" min="20" max="200" value="100"></label></fieldset>
-   <fieldset data-panel="audio" hidden><legend>Audio</legend><label class="control">Volumen <output id="volume-value">100%</output><input id="volume" type="range" min="0" max="200" value="100"></label><label class="check"><input id="mute" type="checkbox"> Silenciar audio</label><div class="two"><label>Entrada suave (s)<input id="fade-in" type="number" min="0" step="0.1" value="0"></label><label>Salida suave (s)<input id="fade-out" type="number" min="0" step="0.1" value="0"></label></div><small>Los fundidos se aplican al exportar, en cada archivo. La vista previa reproduce hasta 100% de volumen.</small></fieldset>
+   <fieldset data-panel="audio" hidden><legend>Audio</legend><details id="original-audio-controls" open><summary>Audio original</summary><label class="control">Volumen original <output id="volume-value">100%</output><input id="volume" type="range" min="0" max="200" value="100"></label><label class="check"><input id="mute" type="checkbox"> Silenciar original</label><div class="two"><label>Entrada suave (s)<input id="fade-in" type="number" min="0" step="0.1" value="0"></label><label>Salida suave (s)<input id="fade-out" type="number" min="0" step="0.1" value="0"></label></div><small>Los fundidos afectan a la mezcla al exportar. La vista previa del audio original reproduce hasta 100% de volumen.</small></details><div id="audio-layer-editor"></div></fieldset>
    <fieldset data-panel="speed" hidden><legend>Velocidad</legend><label class="control">Velocidad de reproducción<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1× · Original</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="4">4×</option></select></label></fieldset>
    <fieldset data-panel="join" hidden><legend>Unir archivos</legend><div class="queue"><p>El primer archivo utiliza el recorte. Los siguientes se añaden completos y reciben los mismos ajustes.</p><button id="add-clips">+ Añadir archivos</button><input id="clips" type="file" multiple accept="video/*,audio/*,.mkv,.avi,.mov,.flac,.m4a,.ogg,.opus" hidden><ol id="clip-list"></ol></div></fieldset>
    <button id="apply-tool" class="primary">Listo</button>
