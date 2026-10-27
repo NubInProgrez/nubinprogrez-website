@@ -5,17 +5,15 @@
 <title>Media Studio · nubinprogrez</title>
 <meta name="description" content="Edita, corta y convierte video y audio en tu navegador con nubinprogrez.">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="editor.css?v=2">
-<script src="vendor/ffmpeg.js" defer></script><script type="module" src="editor.mjs?v=2"></script>
+<link rel="stylesheet" href="editor.css?v=3">
+<script src="vendor/ffmpeg.js" defer></script><script type="module" src="editor.mjs?v=3"></script>
 </head>
 <body>
 <header><a class="brand" href="../index.html">nubinprogrez<span> / media studio</span></a><a class="back" href="../index.html">← Volver al sitio</a></header>
 <main>
-<div class="heading"><div><p class="eyebrow">TU ESPACIO CREATIVO</p><h1>De la idea al último corte<span>.</span></h1><p>Video y audio, a tu ritmo. Tus archivos se procesan en este dispositivo.</p></div><span class="badge">✦ Hecho para crear</span></div>
 <section id="dropzone" class="dropzone" aria-label="Cargar archivos">
- <div class="upload-icon" aria-hidden="true">↥</div><h2>Todo empieza con un archivo</h2><p>Arrastra un video o audio aquí, o selecciónalo en tu dispositivo.</p>
+ <p>Arrastra video o audio aquí</p>
  <label class="button primary" for="file">Seleccionar archivo</label><input id="file" type="file" accept="video/*,audio/*,.mkv,.avi,.mov,.flac,.m4a,.ogg,.opus" hidden>
- <small>MP4, MOV, WebM, MKV, MP3, WAV y más · hasta 500 MB por archivo</small>
 </section>
 <section id="workspace" hidden>
  <div class="editor-toolbar" role="toolbar" aria-label="Herramientas de edición">
@@ -23,6 +21,7 @@
    <button class="tool-tab active" data-tool="cut" aria-pressed="true" title="Recortar duración"><span aria-hidden="true">✂</span><span class="tool-label">Recortar</span></button>
    <button class="tool-tab video-only" data-tool="crop" aria-pressed="false" title="Recortar imagen"><span aria-hidden="true">⌗</span><span class="tool-label">Encuadre</span></button>
    <button class="tool-tab video-only" data-tool="rotate" aria-pressed="false" title="Girar y reflejar"><span aria-hidden="true">↻</span><span class="tool-label">Girar</span></button>
+   <button class="tool-tab video-only" data-tool="resolution" aria-pressed="false" title="Cambiar resolución"><span aria-hidden="true">▣</span><span class="tool-label">Resolución</span></button>
    <button class="tool-tab video-only" data-tool="color" aria-pressed="false" title="Brillo y contraste"><span aria-hidden="true">◐</span><span class="tool-label">Color</span></button>
    <button class="tool-tab" data-tool="audio" aria-pressed="false" title="Volumen y fundidos"><span aria-hidden="true">♫</span><span class="tool-label">Audio</span></button>
    <button class="tool-tab" data-tool="speed" aria-pressed="false" title="Cambiar velocidad"><span aria-hidden="true">◷</span><span class="tool-label">Velocidad</span></button>
@@ -31,9 +30,12 @@
   <div class="toolbar-actions"><button id="reset" title="Restablecer ajustes">↶ <span>Restablecer</span></button><button id="replace" title="Cambiar archivo">↥ <span>Cambiar archivo</span></button></div>
  </div>
  <div class="filebar"><span id="file-kind" class="tag">VIDEO</span><strong id="filename"></strong><small id="fileinfo"></small></div>
+ <div id="context-controls" hidden>   <fieldset data-panel="crop" hidden><legend>Encuadre</legend><label class="control">Relación de aspecto<select id="aspect"><option value="original">Original</option><option value="1">1:1 · Cuadrado</option><option value="1.7777777778">16:9 · Horizontal</option><option value="0.5625">9:16 · Vertical</option><option value="1.3333333333">4:3</option><option value="0.75">3:4</option><option value="custom">Personalizado</option></select></label><details class="crop-precise"><summary>Ajuste preciso</summary><div id="crop-fields" class="four"><label>X %<input id="crop-x" type="number" min="0" max="99" value="0"></label><label>Y %<input id="crop-y" type="number" min="0" max="99" value="0"></label><label>Ancho %<input id="crop-w" type="number" min="1" max="100" value="100"></label><label>Alto %<input id="crop-h" type="number" min="1" max="100" value="100"></label></div></details><output id="crop-dimensions"></output><button id="reset-crop" type="button">Restablecer encuadre</button><small>Arrastra el marco o sus bordes sobre el video.</small></fieldset>
+ <fieldset data-panel="resolution" hidden><legend>Resolución</legend><div class="resolution-presets" role="group" aria-label="Resolución del video"><button data-resolution="original" aria-pressed="true">Original</button><button data-resolution="1080" aria-pressed="false">1080p</button><button data-resolution="720" aria-pressed="false">720p</button><button data-resolution="480" aria-pressed="false">480p</button><button data-resolution="360" aria-pressed="false">360p</button><button data-resolution="240" aria-pressed="false">240p</button></div><output id="resolution-info"></output></fieldset>
+ </div>
  <div class="studio">
   <div class="monitor-panel">
-   <div class="monitor"><canvas id="preview" width="960" height="540" aria-label="Vista previa del archivo"></canvas><video id="media" playsinline preload="metadata" hidden></video><div id="preview-note" hidden></div></div>
+   <div class="monitor"><canvas id="preview" width="960" height="540" aria-label="Vista previa del archivo"></canvas><video id="media" playsinline preload="metadata" hidden></video><div id="crop-layer" hidden></div><div id="preview-note" hidden></div></div>
    <section class="timeline" aria-label="Edición de la duración">
     <div id="timeline-strip"></div>
     <div class="timeline-bottom">
@@ -46,7 +48,7 @@
   </div>
   <aside id="tool-panel" hidden aria-labelledby="tool-panel-title">
    <div class="panel-title"><h2 id="tool-panel-title">Ajustes</h2><button id="close-tool" aria-label="Cerrar ajustes de herramienta">×</button></div>
-   <fieldset data-panel="crop" hidden><legend>Encuadre</legend><label class="control">Relación de aspecto<select id="aspect"><option value="original">Original</option><option value="1">1:1 · Cuadrado</option><option value="1.7777777778">16:9 · Horizontal</option><option value="0.5625">9:16 · Vertical</option><option value="1.3333333333">4:3</option><option value="0.75">3:4</option><option value="custom">Personalizado</option></select></label><div id="crop-fields" class="four" hidden><label>X %<input id="crop-x" type="number" min="0" max="99" value="0"></label><label>Y %<input id="crop-y" type="number" min="0" max="99" value="0"></label><label>Ancho %<input id="crop-w" type="number" min="1" max="100" value="100"></label><label>Alto %<input id="crop-h" type="number" min="1" max="100" value="100"></label></div><small>Recorta la imagen antes de aplicar el giro.</small></fieldset>
+
    <fieldset data-panel="rotate" hidden><legend>Giro y reflejo</legend><label class="control">Girar<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label><div class="rotate-actions"><button id="rotate-left" title="Girar 90° a la izquierda">↶ Izquierda</button><button id="rotate-right" title="Girar 90° a la derecha">↷ Derecha</button></div><div class="checks"><label><input id="flip-h" type="checkbox"> Espejo horizontal</label><label><input id="flip-v" type="checkbox"> Espejo vertical</label></div></fieldset>
    <fieldset data-panel="color" hidden><legend>Color</legend><label class="control">Brillo <output id="brightness-value">100%</output><input id="brightness" type="range" min="20" max="200" value="100"></label><label class="control">Contraste <output id="contrast-value">100%</output><input id="contrast" type="range" min="20" max="200" value="100"></label></fieldset>
    <fieldset data-panel="audio" hidden><legend>Audio</legend><label class="control">Volumen <output id="volume-value">100%</output><input id="volume" type="range" min="0" max="200" value="100"></label><label class="check"><input id="mute" type="checkbox"> Silenciar audio</label><div class="two"><label>Entrada suave (s)<input id="fade-in" type="number" min="0" step="0.1" value="0"></label><label>Salida suave (s)<input id="fade-out" type="number" min="0" step="0.1" value="0"></label></div><small>Los fundidos se aplican al exportar, en cada archivo. La vista previa reproduce hasta 100% de volumen.</small></fieldset>
@@ -56,9 +58,9 @@
   </aside>
  </div>
 </section>
-<dialog id="export-dialog" aria-labelledby="export-title"><div class="panel-title"><h2 id="export-title">Guardar archivo</h2><button id="close-export" aria-label="Cerrar exportación">×</button></div><p>Elige el formato y la calidad de tu resultado.</p><fieldset><legend>Exportación</legend><div class="two"><label>Formato<select id="format"></select></label><label id="resolution-label">Resolución<select id="resolution"><option value="original">Original</option><option value="1080">Hasta 1080p</option><option value="720">Hasta 720p</option><option value="480">Hasta 480p</option></select></label></div><label class="control">Calidad<select id="quality"><option value="high">Alta · archivo mayor</option><option value="medium" selected>Equilibrada</option><option value="low">Ligera · archivo menor</option></select></label><small id="format-note">Elige un formato para tu resultado.</small></fieldset><button id="export" class="primary export">Exportar y descargar ↗</button></dialog>
+<dialog id="export-dialog" aria-labelledby="export-title"><div class="panel-title"><h2 id="export-title">Guardar archivo</h2><button id="close-export" aria-label="Cerrar exportación">×</button></div><p>Elige el formato y la calidad de tu resultado.</p><fieldset><legend>Exportación</legend><div class="two"><label>Formato<select id="format"></select></label><label id="resolution-label">Resolución<select id="resolution"><option value="original">Original</option><option value="1080">Hasta 1080p</option><option value="720">Hasta 720p</option><option value="480">Hasta 480p</option><option value="360">Hasta 360p</option><option value="240">Hasta 240p</option></select></label></div><label class="control">Calidad<select id="quality"><option value="high">Alta · archivo mayor</option><option value="medium" selected>Equilibrada</option><option value="low">Ligera · archivo menor</option></select></label><small id="format-note">Elige un formato para tu resultado.</small></fieldset><button id="export" class="primary export">Exportar y descargar ↗</button></dialog>
 
-<section class="status-panel" aria-live="polite"><button id="close-status" aria-label="Cerrar mensaje" hidden>×</button><p id="status">Listo para tu próximo proyecto.</p><progress id="progress" max="100" value="0" hidden></progress><a id="download" class="button primary" hidden>Descargar resultado</a><button id="cancel" hidden>Cancelar procesamiento</button><details id="technical" hidden><summary>Detalle del procesamiento</summary><pre id="logs"></pre></details></section>
-<footer><span>nubinprogrez · Media Studio</span><span>Procesamiento local · sin subir tus archivos</span></footer>
+<section class="status-panel" aria-live="polite" hidden><button id="close-status" aria-label="Cerrar mensaje" hidden>×</button><p id="status">Listo para tu próximo proyecto.</p><progress id="progress" max="100" value="0" hidden></progress><a id="download" class="button primary" hidden>Descargar resultado</a><button id="cancel" hidden>Cancelar procesamiento</button><details id="technical" hidden><summary>Detalle del procesamiento</summary><pre id="logs"></pre></details></section>
+
 </main>
 </body></html>

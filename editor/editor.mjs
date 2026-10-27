@@ -1,9 +1,17 @@
-import {FORMATS,cropRect,outputSize,selection,buildCommand,encoding} from './engine.mjs';
+import {FORMATS,cropRect,outputSize,selection,buildCommand,encoding} from './engine.mjs?v=3';
 import {MediaTimeline,parseTimeCode} from './timeline.mjs';
+import {VideoCropper} from './cropper.mjs?v=3';
 const $=id=>document.getElementById(id),media=$('media'),canvas=$('preview'),ctx=canvas.getContext('2d');
 let file=null,meta=null,clips=[],sourceURL=null,resultURL=null,wave=null,busy=false,engine=null,enginePromise=null,cancelled=false;
 let renderFrame=0,exportDuration=1,stageStart=0,stageSpan=100,audioContext=null;
+let currentTool='cut',cropManual=false,lastCrop=null;
 const timeline=new MediaTimeline($('timeline-strip'),{onSeek:seekPreview,onTrim:(edge,at)=>{$(edge).value=time(at);update()},onInteraction:()=>media.pause()});
+const cropper=new VideoCropper($('crop-layer'),{onInteraction:()=>media.pause(),onChange:rect=>{
+ cropManual=true;if($('aspect').value==='original')$('aspect').value='custom';
+ writeCropFields(rect);update();
+}});
+const previewObserver=new ResizeObserver(()=>{if(meta)draw()});previewObserver.observe(canvas);
+function writeCropFields(rect){for(const [id,key]of [['crop-x','x'],['crop-y','y'],['crop-w','w'],['crop-h','h']])$(id).value=(rect[key]*100).toFixed(9)}
 const MAX=500*1024*1024;
 const number=id=>{
  const value=$(id).value;
@@ -15,16 +23,18 @@ const time=n=>{const ticks=Math.round(Math.max(0,Number(n)||0)*100),secs=Math.fl
 function status(message,error=false){$('status').textContent=message;$('status').parentElement.classList.toggle('error',error);$('status').parentElement.hidden=false;$('close-status').hidden=busy||!document.body.classList.contains('has-file')}
 function seekPreview(at){if(!meta)return;media.currentTime=Math.max(0,Math.min(at,meta.duration));timeline.setTime(at);syncPlayback();}
 function syncPlayback(){timeline.setTime(media.currentTime);$('clock').textContent=`${time(media.currentTime)} / ${time(meta?.duration)}`;}
-const toolTitles={cut:'Recortar',crop:'Encuadre',rotate:'Girar y reflejar',color:'Color',audio:'Audio',speed:'Velocidad',join:'Unir archivos'};
+const toolTitles={cut:'Recortar',crop:'Encuadre',rotate:'Girar y reflejar',resolution:'Resolución',color:'Color',audio:'Audio',speed:'Velocidad',join:'Unir archivos'};
 function openTool(tool){
+ currentTool=tool;const inline=tool==='crop'||tool==='resolution';
  document.querySelectorAll('.tool-tab').forEach(el=>{const active=el.dataset.tool===tool;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active))});
- $('tool-panel').hidden=tool==='cut';$('tool-panel-title').textContent=toolTitles[tool];
+ $('tool-panel').hidden=tool==='cut'||inline;$('tool-panel-title').textContent=toolTitles[tool];$('context-controls').hidden=!inline;
  document.querySelectorAll('[data-panel]').forEach(el=>el.hidden=el.dataset.panel!==tool);
+ if(tool==='crop')media.pause();if(meta)draw();
 }
 function showExport(){if(!file||busy)return;openTool('cut');$('export-dialog').showModal()}
-function options(){return {start:number('start'),end:number('end'),cut:document.querySelector('[name=cut]:checked').value,speed:number('speed'),rotation:number('rotation'),aspect:$('aspect').value,cropX:number('crop-x'),cropY:number('crop-y'),cropW:number('crop-w'),cropH:number('crop-h'),flipH:$('flip-h').checked,flipV:$('flip-v').checked,brightness:number('brightness'),contrast:number('contrast'),volume:number('volume'),mute:$('mute').checked,fadeIn:number('fade-in'),fadeOut:number('fade-out'),format:$('format').value,resolution:$('resolution').value,quality:$('quality').value}}
+function options(){return {start:number('start'),end:number('end'),cut:document.querySelector('[name=cut]:checked').value,speed:number('speed'),rotation:number('rotation'),aspect:$('aspect').value,cropManual,cropX:number('crop-x'),cropY:number('crop-y'),cropW:number('crop-w'),cropH:number('crop-h'),flipH:$('flip-h').checked,flipV:$('flip-v').checked,brightness:number('brightness'),contrast:number('contrast'),volume:number('volume'),mute:$('mute').checked,fadeIn:number('fade-in'),fadeOut:number('fade-out'),format:$('format').value,resolution:$('resolution').value,quality:$('quality').value}}
 function setBusy(value){
- busy=value;document.querySelectorAll('aside fieldset,dialog fieldset').forEach(e=>e.disabled=value);
+ busy=value;document.querySelectorAll('aside fieldset,dialog fieldset,#context-controls fieldset').forEach(e=>e.disabled=value);
  for(const id of ['export','save','save-settings','reset','replace','add-clips','file','clips','start','end'])$(id).disabled=value;
  document.querySelectorAll('.tool-tab').forEach(e=>e.disabled=value);timeline.setDisabled(value);
  document.querySelectorAll('[name=cut],#clip-list button').forEach(e=>e.disabled=value);
@@ -72,16 +82,17 @@ function formatUI(){
  $('format-note').textContent=format==='gif'?'GIF no incluye audio. Exporta 12 fotogramas por segundo.':!isVideo&&meta?.hasVideo?'Se extraerá la pista de audio del video.':'La exportación aplica los ajustes seleccionados.';
 }
 function defaults(){
+ cropManual=false;lastCrop=null;
  const values={start:time(0),end:time(meta.duration),speed:1,rotation:0,aspect:'original','crop-x':0,'crop-y':0,'crop-w':100,'crop-h':100,brightness:100,contrast:100,volume:100,'fade-in':0,'fade-out':0,resolution:'original',quality:'medium'};
  for(const[id,value]of Object.entries(values))$(id).value=value;
  for(const id of ['flip-h','flip-v','mute'])$(id).checked=false;
- document.querySelector('[name=cut][value=keep]').checked=true;$('loop').checked=false;$('crop-fields').hidden=true;
+ document.querySelector('[name=cut][value=keep]').checked=true;$('loop').checked=false;document.querySelector('.crop-precise').open=false;
  media.currentTime=0;timeline.setTime(0);openTool('cut');update();
 }
 async function openFile(f){
  if(!f||busy)return;
  try{validateFile(f)}catch(e){status(e.message,true);return}
- clearResult();media.pause();timeline.resetSource();if(sourceURL)URL.revokeObjectURL(sourceURL);file=f;wave=null;clips=[];renderClips();$('workspace').hidden=true;$('dropzone').hidden=false;document.body.classList.remove('has-file');
+ clearResult();media.pause();timeline.resetSource();cropper.setVisible(false);if(sourceURL)URL.revokeObjectURL(sourceURL);file=f;wave=null;clips=[];renderClips();$('workspace').hidden=true;$('dropzone').hidden=false;document.body.classList.remove('has-file');
  sourceURL=URL.createObjectURL(f);status('Leyendo archivo…');setBusy(true);
  const browserMeta=await new Promise(resolve=>{
   const timer=setTimeout(()=>done(null),8000);
@@ -111,10 +122,17 @@ async function decodeWave(f){
 }
 function update(){
  if(!meta)return;
- $('crop-fields').hidden=$('aspect').value!=='custom';
  for(const name of ['brightness','contrast','volume'])$(name+'-value').textContent=$(name).value+'%';
  media.playbackRate=number('speed');media.volume=Math.min(1,number('volume')/100);media.muted=$('mute').checked;
  syncPlayback();timeline.setSelection(number('start'),number('end'),document.querySelector('[name=cut]:checked').value==='remove');
+ if(meta.hasVideo){
+  const o=options(),c=cropRect(meta.width,meta.height,o),size=outputSize(meta,o);
+  lastCrop={x:c.x/meta.width,y:c.y/meta.height,w:c.w/meta.width,h:c.h/meta.height};
+  const ratio=$('aspect').value==='custom'||$('aspect').value==='original'?null:Number($('aspect').value)*meta.height/meta.width;
+  cropper.setRect(lastCrop,ratio);$('crop-dimensions').textContent=`${c.w} × ${c.h} px`;
+  $('resolution-info').textContent=`${size.w} × ${size.h} px`;
+  document.querySelectorAll('[data-resolution]').forEach(el=>{const active=el.dataset.resolution===o.resolution;el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active))});
+ }
  try{const {duration}=selection(meta,options());$('selection-label').textContent=`Resultado: ${time(duration)}`}catch{$('selection-label').textContent='Revisa el inicio y el fin'}
  draw();
 }
@@ -123,9 +141,15 @@ function draw(){
  if(!meta)return;
  syncPlayback();
  const o=options();
+ const cropping=currentTool==='crop'&&meta.hasVideo&&media.readyState>=2;cropper.setVisible(cropping);
  if(meta.hasVideo&&media.readyState>=2){
-  const c=cropRect(media.videoWidth||meta.width,media.videoHeight||meta.height,o),sw=o.rotation%180?c.h:c.w,sh=o.rotation%180?c.w:c.h,scale=Math.min(940/sw,520/sh);
-  ctx.save();ctx.translate(480,270);ctx.scale(o.flipH?-1:1,o.flipV?-1:1);ctx.rotate(o.rotation*Math.PI/180);ctx.filter=`brightness(${o.brightness}%) contrast(${o.contrast}%)`;ctx.drawImage(media,c.x,c.y,c.w,c.h,-c.w*scale/2,-c.h*scale/2,c.w*scale,c.h*scale);ctx.restore();
+  const width=media.videoWidth||meta.width,height=media.videoHeight||meta.height;
+  const c=cropping?{x:0,y:0,w:width,h:height}:cropRect(width,height,o),rotation=cropping?0:o.rotation,sw=rotation%180?c.h:c.w,sh=rotation%180?c.w:c.h,scale=Math.min(940/sw,520/sh);
+  ctx.save();ctx.translate(480,270);ctx.scale(!cropping&&o.flipH?-1:1,!cropping&&o.flipV?-1:1);ctx.rotate(rotation*Math.PI/180);ctx.filter=`brightness(${o.brightness}%) contrast(${o.contrast}%)`;ctx.drawImage(media,c.x,c.y,c.w,c.h,-c.w*scale/2,-c.h*scale/2,c.w*scale,c.h*scale);ctx.restore();
+  if(cropping){
+   const bounds=canvas.getBoundingClientRect(),parent=canvas.parentElement.getBoundingClientRect(),displayScale=Math.min(bounds.width/960,bounds.height/540);
+   cropper.setViewport({left:bounds.left-parent.left+(bounds.width-960*displayScale)/2+(480-width*scale/2)*displayScale,top:bounds.top-parent.top+(bounds.height-540*displayScale)/2+(270-height*scale/2)*displayScale,width:width*scale*displayScale,height:height*scale*displayScale});
+  }
  }else if(!meta.hasVideo){
   ctx.fillStyle='#9aa7ff';ctx.textAlign='center';ctx.font='18px system-ui';ctx.fillText('A U D I O   S T U D I O',480,140);
   if(wave){const played=media.currentTime/meta.duration;wave.forEach((n,i)=>{ctx.fillStyle=i/wave.length<played?'#b8c2ff':'#39446e';const h=Math.max(3,n*190);ctx.fillRect(60+i*840/wave.length,270-h/2,1.5,h)})}else{ctx.fillStyle='#a6adc9';ctx.font='16px system-ui';ctx.fillText('♫  '+file.name.slice(0,65),480,270)}
@@ -181,6 +205,11 @@ window.addEventListener('dragover',e=>e.preventDefault());window.addEventListene
 $('reset').onclick=()=>{defaults();status('Ajustes restablecidos.');clearResult()};
 $('format').onchange=formatUI;
 document.querySelectorAll('aside input,aside select,#start,#end,[name=cut]').forEach(el=>el.addEventListener('input',update));
+$('aspect').addEventListener('change',()=>{if($('aspect').value==='custom'&&lastCrop)writeCropFields(lastCrop);cropManual=false;update()});
+for(const id of ['crop-x','crop-y','crop-w','crop-h'])$(id).addEventListener('input',()=>{cropManual=true;$('aspect').value='custom';update()});
+$('reset-crop').onclick=()=>{cropManual=false;$('aspect').value='original';writeCropFields({x:0,y:0,w:1,h:1});update()};
+document.querySelectorAll('[data-resolution]').forEach(el=>el.onclick=()=>{$('resolution').value=el.dataset.resolution;update()});
+$('resolution').addEventListener('change',update);
 for(const id of ['start','end'])$(id).addEventListener('change',()=>{const at=number(id);if(Number.isFinite(at)){$(id).value=time(at);update();media.pause();seekPreview(at)}});
 $('to-start').onclick=()=>{media.pause();seekPreview(number('start')||0)};
 document.querySelectorAll('.tool-tab').forEach(el=>el.onclick=()=>openTool(el.dataset.tool));
@@ -207,6 +236,6 @@ media.addEventListener('timeupdate',()=>{
 media.addEventListener('ended',()=>{if($('loop').checked&&meta){media.currentTime=options().cut==='keep'?number('start'):0;media.play().catch(()=>{})}});
 $('export').onclick=exportFile;
 $('cancel').onclick=()=>{cancelled=true;engine?.terminate();engine=null;enginePromise=null;$('cancel').disabled=true;status('Procesamiento cancelado. Puedes cambiar los ajustes y volver a exportar.');};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('tool-panel').hidden)openTool('cut');if(e.code==='Space'&&file&&!busy&&!$('export-dialog').open&&!['INPUT','SELECT','BUTTON','TEXTAREA','A'].includes(e.target.tagName)){e.preventDefault();$('play').click()}});
-window.addEventListener('beforeunload',()=>{timeline.destroy();if(sourceURL)URL.revokeObjectURL(sourceURL);if(resultURL)URL.revokeObjectURL(resultURL);engine?.terminate();audioContext?.close()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&currentTool!=='cut')openTool('cut');if(e.code==='Space'&&file&&!busy&&!$('export-dialog').open&&!['INPUT','SELECT','BUTTON','TEXTAREA','A'].includes(e.target.tagName)){e.preventDefault();$('play').click()}});
+window.addEventListener('beforeunload',()=>{timeline.destroy();previewObserver.disconnect();if(sourceURL)URL.revokeObjectURL(sourceURL);if(resultURL)URL.revokeObjectURL(resultURL);engine?.terminate();audioContext?.close()});
 if(location.protocol==='file:')status('Abre el sitio desde un servidor web (HTTP/HTTPS). El motor no puede ejecutarse abriendo el HTML con doble clic.',true);

@@ -8,10 +8,11 @@ export const FORMATS = {
  ogg: {mime:'audio/ogg', video:false, label:'OGG · Audio'}
 };
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const even=n=>Math.max(2,Math.floor(n/2)*2);
+// Normalized UI coordinates can round just below an exact pixel boundary.
+const even=n=>Math.max(2,Math.floor((n+0.0001)/2)*2);
 export function cropRect(width,height,o){
  let x=0,y=0,w=width,h=height;
- if(o.aspect==='custom'){
+ if(o.aspect==='custom'||o.cropManual){
   x=clamp(o.cropX,0,99)*width/100;y=clamp(o.cropY,0,99)*height/100;
   w=clamp(o.cropW,1,100)*width/100;h=clamp(o.cropH,1,100)*height/100;
   w=Math.min(w,width-x);h=Math.min(h,height-y);
@@ -19,7 +20,7 @@ export function cropRect(width,height,o){
   const ratio=Number(o.aspect);if(width/height>ratio)w=height*ratio;else h=width/ratio;
   x=(width-w)/2;y=(height-h)/2;
  }
- return {x:Math.max(0,Math.floor(x/2)*2),y:Math.max(0,Math.floor(y/2)*2),w:even(w),h:even(h)};
+ return {x:Math.max(0,Math.floor((x+0.0001)/2)*2),y:Math.max(0,Math.floor((y+0.0001)/2)*2),w:even(w),h:even(h)};
 }
 export function selection(meta,o){
  const start=Number(o.start),end=Number(o.end);
